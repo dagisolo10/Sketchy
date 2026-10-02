@@ -1,11 +1,16 @@
 import "@/app/index.css";
 
 import App from "@/app/App.tsx";
-import { StrictMode } from "react";
+import AuthProvider from "@/providers/auth-provider";
+import SocketProvider from "@/providers/socket.provider";
 import { createRoot } from "react-dom/client";
 
 createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-        <App />
-    </StrictMode>,
+    // <StrictMode>
+    <AuthProvider>
+        <SocketProvider>
+            <App />,
+        </SocketProvider>
+    </AuthProvider>,
+    // </StrictMode>
 );

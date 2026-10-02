@@ -12,6 +12,9 @@ export default defineConfig({
             presets: [reactCompilerPreset()],
         }),
     ],
+    server: {
+        host: true,
+    },
     resolve: {
         alias: {
             "@": path.resolve(import.meta.dirname, "./src"),
