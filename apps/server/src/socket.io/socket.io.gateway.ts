@@ -1,7 +1,8 @@
 import { AuthService } from "@/auth/auth.service.js";
 import { SocketIoService } from "@/socket.io/socket.io.service.js";
-import type { ClientToServerEvents, TypedServer, TypedSocket } from "@/types/socket-events.js";
+import type { TypedServer, TypedSocket } from "@/types/socket-events.js";
 import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { ClientToServerEvents } from "@package/types";
 import { parseCookie } from "cookie";
 
 export const Sub = (event: keyof ClientToServerEvents) => SubscribeMessage(event);

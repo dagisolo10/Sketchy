@@ -1,0 +1,16 @@
+{
+    "name": "@package/types",
+    "module": "index.ts",
+    "type": "module",
+    "types": "index.ts",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "private": true,
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^7"
+    }
+}

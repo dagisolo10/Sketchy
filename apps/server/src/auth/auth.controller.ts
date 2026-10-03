@@ -1,7 +1,8 @@
-import { AuthService } from "@/auth/auth.service.js";
-import { LoginDto, Player } from "@/types/models.js";
-import { BadRequestException, Body, Controller, Delete, Post, Req, Res } from "@nestjs/common";
+import { LoginDto } from "@/types/models.js";
+import type { Player } from "@package/types";
 import type { Request, Response } from "express";
+import { AuthService } from "@/auth/auth.service.js";
+import { BadRequestException, Body, Controller, Delete, Post, Req, Res } from "@nestjs/common";
 
 @Controller("auth")
 export class AuthController {

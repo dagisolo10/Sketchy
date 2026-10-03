@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { useSocket } from "@/contexts/socket-context";
 import { api, requestApi } from "@/lib/axios";
+import { Wifi } from "lucide-react";
 
 export default function App() {
     const { player } = useAuth();
@@ -21,7 +22,7 @@ export default function App() {
         <div className="flex h-screen flex-col items-center justify-center gap-4">
             <div>
                 <p className="text-2xl">
-                    Socket <span className="font-bold">{connected ? "🟢 Connected" : "❌ Not Connected"}</span>
+                    Socket <Wifi /> <span className="font-bold">{connected ? "🟢 Connected" : "❌ Not Connected"}</span>
                 </p>
             </div>
 

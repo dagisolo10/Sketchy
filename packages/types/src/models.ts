@@ -3,6 +3,6 @@ export type Player = {
     playerId: string;
 };
 
-export type LoginDto = {
+export type LoginPayload = {
     name: string;
 };

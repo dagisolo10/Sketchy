@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/auth-context";
-import { SocketContext } from "@/contexts/socket-context";
+import { SocketContext, type TypedSocket } from "@/contexts/socket-context";
 import { SERVER_URL } from "@/lib/axios";
-import type { ClientData, ClientEvents, TypedSocket } from "@/types/socket-events";
+import type { ClientData, ClientEvents } from "@package/types";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { io, type ExtendedError } from "socket.io-client";
 

@@ -13,7 +13,7 @@ export type ApiError = {
     statusCode: number;
 };
 
-export function hasApiError(result: unknown): result is ApiError {
+function hasApiError(result: unknown): result is ApiError {
     return typeof result === "object" && result !== null && "error" in result;
 }
 

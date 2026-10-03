@@ -1,5 +1,8 @@
-import type { ClientData, ClientEvents, TypedSocket } from "@/types/socket-events";
+import type { ClientData, ClientEvents, ClientToServerEvents, ServerToClientEvents } from "@package/types";
 import { createContext, useContext } from "react";
+import type { Socket } from "socket.io-client";
+
+export type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 type SocketContextType = {
     connected: boolean;

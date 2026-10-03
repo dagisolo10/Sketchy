@@ -1,4 +1,4 @@
-import type { Player } from "@/types/models";
+import type { Player } from "@package/types";
 import { createContext, useContext } from "react";
 
 type AuthContextType = {

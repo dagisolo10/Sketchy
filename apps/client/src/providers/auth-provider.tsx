@@ -1,13 +1,13 @@
 import { AuthContext } from "@/contexts/auth-context";
 import { api, requestApi } from "@/lib/axios";
-import type { LoginDto, Player } from "@/types/models";
+import type { LoginPayload, Player } from "@package/types";
 import { useEffect, useState, type PropsWithChildren } from "react";
 
 export default function AuthProvider({ children }: PropsWithChildren) {
     const [player, setPlayer] = useState<Player | null>(null);
 
     useEffect(() => {
-        async function getSession(data: LoginDto) {
+        async function getSession(data: LoginPayload) {
             try {
                 const player = await requestApi(() => api.post<Player>("/auth/session", data));
 

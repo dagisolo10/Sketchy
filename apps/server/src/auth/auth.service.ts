@@ -1,5 +1,5 @@
-import { Player } from "@/types/models.js";
 import { Injectable } from "@nestjs/common";
+import { Player } from "@package/types";
 import { ulid } from "ulid";
 
 @Injectable()

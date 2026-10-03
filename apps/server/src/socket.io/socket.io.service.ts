@@ -1,5 +1,6 @@
-import { ServerData, ServerEvents, TypedServer } from "@/types/socket-events.js";
+import { TypedServer } from "@/types/socket-events.js";
 import { Injectable } from "@nestjs/common";
+import { ServerData, ServerEvents } from "@package/types";
 
 @Injectable()
 export class SocketIoService {
