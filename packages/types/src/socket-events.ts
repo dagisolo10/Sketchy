@@ -1,10 +1,6 @@
-export interface ServerToClientEvents {
-    connect: () => void;
-}
+export interface ServerToClientEvents {}
 
-export interface ClientToServerEvents {
-    connect: () => void;
-}
+export interface ClientToServerEvents {}
 
 export type ClientEvents = keyof ClientToServerEvents;
 export type ServerEvents = keyof ServerToClientEvents;

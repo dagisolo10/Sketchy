@@ -1,6 +1,7 @@
-import { AuthService } from "@/auth/auth.service.js";
+import { SessionService } from "@/session/session.service.js";
 import { SocketIoService } from "@/socket.io/socket.io.service.js";
-import type { TypedServer, TypedSocket } from "@/types/socket-events.js";
+import type { TypedServer, TypedSocket } from "@/types/socket.js";
+import { OnModuleInit } from "@nestjs/common";
 import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { ClientToServerEvents } from "@package/types";
 import { parseCookie } from "cookie";
@@ -8,28 +9,29 @@ import { parseCookie } from "cookie";
 export const Sub = (event: keyof ClientToServerEvents) => SubscribeMessage(event);
 
 @WebSocketGateway({ cors: { origin: "*" } })
-export class SocketIoGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
-        private readonly authService: AuthService,
+        private readonly authService: SessionService,
         private readonly socketService: SocketIoService,
     ) {}
 
     @WebSocketServer()
     private server!: TypedServer;
 
-    afterInit() {
+    onModuleInit() {
         this.socketService.setServer(this.server);
     }
 
     handleConnection(client: TypedSocket) {
+        console.log("⏰ Connecting to socket...");
+
         const cookieHeader = client.handshake.headers.cookie;
 
         if (!cookieHeader) {
             return;
         }
 
-        const cookies = parseCookie(cookieHeader);
-        const sessionId = cookies["session"];
+        const sessionId = parseCookie(cookieHeader)["session"];
 
         if (!sessionId) return;
 

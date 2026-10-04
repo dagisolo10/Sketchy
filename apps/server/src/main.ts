@@ -10,7 +10,7 @@ async function bootstrap() {
 
     app.enableCors({
         credentials: true,
-        origin: "http://172.20.10.4:5173",
+        origin: "http://localhost:5173",
     });
 
     const validationPipe = new ValidationPipe({

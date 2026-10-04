@@ -1,10 +1,11 @@
-import { AuthModule } from "@/auth/auth.module.js";
+import { SessionModule } from "@/session/session.module.js";
 import { SocketIoGateway } from "@/socket.io/socket.io.gateway.js";
 import { SocketIoService } from "@/socket.io/socket.io.service.js";
-import { Module } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 
+@Global()
 @Module({
-    imports: [AuthModule],
+    imports: [SessionModule],
     providers: [SocketIoGateway, SocketIoService],
 })
 export class SocketIoModule {}

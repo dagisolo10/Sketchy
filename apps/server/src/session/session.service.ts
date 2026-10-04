@@ -1,19 +1,17 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { Player } from "@package/types";
 import { ulid } from "ulid";
 
 @Injectable()
-export class AuthService {
+export class SessionService {
     private sessions = new Map<string, Player>();
     private disconnectTimers = new Map<string, NodeJS.Timeout>();
 
-    // todo: add exp time
-
-    getOrCreateSession(name: string) {
+    getOrCreateSession() {
         const playerId = ulid();
         const sessionId = ulid();
 
-        const player: Player = { name, playerId };
+        const player: Player = { name: `User-${playerId.slice(playerId.length - 3, playerId.length)}`, playerId };
 
         this.sessions.set(sessionId, player);
 
@@ -24,12 +22,27 @@ export class AuthService {
 
     deleteSession(sessionId: string) {
         this.sessions.delete(sessionId);
-
         console.log("Session deleted ❌", this.sessions.size);
     }
 
     getPlayerBySession(sessionId: string) {
         return this.sessions.get(sessionId);
+    }
+
+    updatePlayerName(name: string, sessionId: string) {
+        const player = this.getPlayerBySession(sessionId);
+
+        if (!player) {
+            throw new UnauthorizedException("You don't have an active session");
+        }
+
+        const updatedPlayer: Player = { name, playerId: player.playerId };
+
+        this.sessions.set(sessionId, updatedPlayer);
+
+        console.log("updatedPlayer", updatedPlayer);
+
+        return updatedPlayer;
     }
 
     startDisconnectGracePeriod(playerId: string, sessionId: string) {

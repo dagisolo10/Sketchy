@@ -1,27 +1,27 @@
-import { LoginDto } from "@/types/models.js";
+import { SessionService } from "@/session/session.service.js";
+import { PlayerDto } from "@/types/models.js";
+import { BadRequestException, Body, Controller, Delete, Get, Patch, Req, Res } from "@nestjs/common";
 import type { Player } from "@package/types";
 import type { Request, Response } from "express";
-import { AuthService } from "@/auth/auth.service.js";
-import { BadRequestException, Body, Controller, Delete, Post, Req, Res } from "@nestjs/common";
 
-@Controller("auth")
-export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+@Controller("session")
+export class SessionController {
+    constructor(private readonly authService: SessionService) {}
 
-    @Post("session")
-    getOrCreateSession(@Body() data: LoginDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
+    @Get()
+    getOrCreateSession(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
         let sessionPlayer!: Player;
         let sessionId = req.cookies["session"] as string | undefined;
 
         if (!sessionId) {
-            const { player, sessionId: sId } = this.authService.getOrCreateSession(data.name);
+            const { player, sessionId: sId } = this.authService.getOrCreateSession();
             sessionId = sId;
             sessionPlayer = player;
         } else {
             const player = this.authService.getPlayerBySession(sessionId);
 
             if (!player) {
-                const { player, sessionId: sId } = this.authService.getOrCreateSession(data.name);
+                const { player, sessionId: sId } = this.authService.getOrCreateSession();
 
                 sessionId = sId;
                 sessionPlayer = player;
@@ -41,7 +41,7 @@ export class AuthController {
         return sessionPlayer;
     }
 
-    @Delete("session")
+    @Delete()
     deleteSession(@Req() req: Request) {
         const sessionId = req.cookies["session"] as string | undefined;
 
@@ -50,5 +50,16 @@ export class AuthController {
         }
 
         return this.authService.deleteSession(sessionId);
+    }
+
+    @Patch()
+    updatePlayerName(@Body() data: PlayerDto, @Req() req: Request) {
+        const sessionId = req.cookies["session"] as string | undefined;
+
+        if (!sessionId) {
+            throw new BadRequestException("SessionId is missing");
+        }
+
+        return this.authService.updatePlayerName(data.name, sessionId);
     }
 }

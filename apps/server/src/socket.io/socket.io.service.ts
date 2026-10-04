@@ -1,5 +1,5 @@
-import { TypedServer } from "@/types/socket-events.js";
 import { Injectable } from "@nestjs/common";
+import { TypedServer } from "@/types/socket.js";
 import { ServerData, ServerEvents } from "@package/types";
 
 @Injectable()
