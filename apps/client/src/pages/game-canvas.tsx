@@ -38,7 +38,7 @@ function GameCanvasPage({ room }: { room: Room }) {
     return (
         <GameShell
             trailing={
-                <Link to="/room/SK8Y4">
+                <Link to={`/room/${room.roomId}`}>
                     <Button variant="outline" size="lg" className="hover:text-primary gap-4 px-4 font-bold tracking-widest uppercase">
                         <LogOut className="size-4" />
                         LEAVE GAME
