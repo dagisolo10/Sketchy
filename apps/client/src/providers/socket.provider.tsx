@@ -1,13 +1,12 @@
 import { SocketContext, type TypedSocket } from "@/contexts/socket-context";
+import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
 import { SERVER_URL } from "@/lib/axios";
-import type { ClientData, ClientEvents, Player } from "@package/types";
-import { useQueryClient } from "@tanstack/react-query";
+import type { ClientData, ClientEvents } from "@package/types";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 import { io, type ExtendedError } from "socket.io-client";
 
 export default function SocketProvider({ children }: PropsWithChildren) {
-    const queryClient = useQueryClient();
-    const player = queryClient.getQueryData<Player>(["session"]);
+    const { data: player } = useGetOrCreateSession();
 
     const [connected, setConnected] = useState(false);
     const [socket, setSocket] = useState<TypedSocket | null>(null);

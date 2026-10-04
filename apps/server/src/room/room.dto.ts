@@ -1,12 +1,18 @@
-import { IsNumber } from "class-validator";
+import { IsInt, Max, Min } from "class-validator";
 
 export class CreateRoomDto {
-    @IsNumber()
+    @IsInt()
+    @Min(3)
+    @Max(10)
     maxPlayers: number;
 
-    @IsNumber()
+    @IsInt()
+    @Min(10)
+    @Max(120)
     drawingTime: number;
 
-    @IsNumber()
+    @IsInt()
+    @Min(1)
+    @Max(3)
     imposterCount: number;
 }

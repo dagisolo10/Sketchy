@@ -24,8 +24,8 @@ export default function PlayPage() {
     const [playerName, setPlayerName] = useState(player?.name ?? "User");
     const [imposterCount, setImposterCount] = useState(1);
 
-    const joinRoomMt = useJoinRoom();
     const updateNameMt = useUpdatePlayerName();
+    const joinRoomMt = useJoinRoom({ onSuccess: ({ roomId }) => router(`/room/${roomId}`) });
     const createRoomMt = useCreateRoom({ onSuccess: ({ roomId }) => router(`/room/${roomId}`) });
 
     const roomSettings = [
@@ -110,7 +110,7 @@ export default function PlayPage() {
 
                         <button
                             disabled={createRoomMt.isPending}
-                            onClick={async () => await createRoomMt.mutateAsync({ maxPlayers: playerLimit, drawingTime, imposterCount })}
+                            onClick={() => createRoomMt.mutate({ maxPlayers: playerLimit, drawingTime, imposterCount })}
                             className="glow-primary bg-primary group text-background hover:text-foreground hover:border-primary flex h-14 w-fit cursor-pointer items-center gap-3 border border-transparent px-8 text-base font-bold tracking-wider uppercase transition-[scale,color,background-color,border-color] duration-[300ms,500ms,500ms,500ms] hover:bg-transparent active:scale-98"
                         >
                             <Plus className="fill-background group-hover:fill-foreground size-5 transition-colors duration-500" />
@@ -145,7 +145,7 @@ export default function PlayPage() {
                             <Button
                                 size="lg"
                                 disabled={joinRoomMt.isPending}
-                                onClick={async () => await joinRoomMt.mutateAsync({ roomId })}
+                                onClick={() => joinRoomMt.mutate({ roomId: roomId.trim().toUpperCase() })}
                                 className="h-14 w-full gap-2 rounded-none text-base font-bold tracking-wider uppercase"
                             >
                                 JOIN ROOM

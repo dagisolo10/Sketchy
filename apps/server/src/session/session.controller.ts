@@ -42,12 +42,14 @@ export class SessionController {
     }
 
     @Delete()
-    deleteSession(@Req() req: Request) {
+    deleteSession(@Req() req: Request, @Res() res: Response) {
         const sessionId = req.cookies["session"] as string | undefined;
 
         if (!sessionId) {
             throw new BadRequestException("SessionId is missing");
         }
+
+        res.clearCookie("session");
 
         return this.authService.deleteSession(sessionId);
     }

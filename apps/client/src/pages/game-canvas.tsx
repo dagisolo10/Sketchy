@@ -1,11 +1,15 @@
-import { cn } from "cn";
-import { Chip } from "@/components/ui/chip";
-import { Link, useParams } from "react-router";
-import { Button } from "@/components/ui/button";
-import GameShell from "@/components/game-shell";
-import { LogOut, Paintbrush } from "lucide-react";
-import { Countdown } from "@/components/ui/countdown";
+import NotFound from "./not-found";
+
 import DrawingCanvas from "@/components/drawing-canvas";
+import GameShell from "@/components/game-shell";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
+import { Countdown } from "@/components/ui/countdown";
+import { useGetRoom } from "@/hooks/tan-stack/room";
+import type { Room } from "@package/types";
+import { cn } from "cn";
+import { LogOut, Paintbrush } from "lucide-react";
+import { Link, useParams } from "react-router";
 
 const MOCK_PLAYERS = [
     { name: "Dagmawi", initials: "DA", drawing: true, connection: 96 },
@@ -16,9 +20,19 @@ const MOCK_PLAYERS = [
     { name: "Alex", initials: "AL", drawing: false, connection: 70 },
 ];
 
-export default function GameCanvasPage() {
-    const { roomId } = useParams<{ roomId: string }>();
-    const roomCode = (roomId ?? "SK8Y4").toUpperCase();
+export default function GameCanvasLayout() {
+    const { roomId = "" } = useParams<{ roomId: string }>();
+
+    const { data: room } = useGetRoom(roomId);
+
+    if (!room) {
+        return <NotFound />;
+    }
+
+    return <GameCanvasPage room={room} />;
+}
+
+function GameCanvasPage({ room }: { room: Room }) {
     const drawer = MOCK_PLAYERS.find((p) => p.drawing);
 
     return (
@@ -36,7 +50,7 @@ export default function GameCanvasPage() {
                 <div className="bg-card/70 mb-4 flex flex-wrap items-center justify-between gap-3 border border-slate-800 px-4 py-3 sm:px-5">
                     <div className="flex items-center gap-3">
                         <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">ROOM</span>
-                        <span className="text-primary text-glow text-lg font-black tracking-[0.3em] sm:text-xl">{roomCode}</span>
+                        <span className="text-primary text-glow text-lg font-black tracking-[0.3em] sm:text-xl">{room.roomId}</span>
                     </div>
 
                     <div className="flex items-center gap-3">

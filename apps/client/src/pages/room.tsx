@@ -114,13 +114,13 @@ function RoomPage({ room }: { room: Room }) {
 
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                             {players.map((player) => (
-                                <PlayerCard key={player.playerId} player={player} host={isHost} />
+                                <PlayerCard key={player.playerId} player={player} host={player.playerId === room.hostId} />
                             ))}
                         </div>
                     </div>
 
                     <aside className="space-y-6">
-                        {!isHost && (
+                        {isHost && (
                             <Link to={"/game/" + room.roomId}>
                                 <Button disabled={!everyoneReady} size="lg" className="glow-primary h-14 w-full gap-2 rounded-none px-8 text-base font-bold tracking-wider uppercase">
                                     <Play className="fill-background text-background size-4" />

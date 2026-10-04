@@ -40,8 +40,6 @@ export class SessionService {
 
         this.sessions.set(sessionId, updatedPlayer);
 
-        console.log("updatedPlayer", updatedPlayer);
-
         return updatedPlayer;
     }
 
@@ -53,7 +51,7 @@ export class SessionService {
             setTimeout(() => {
                 this.deleteSession(sessionId);
                 this.disconnectTimers.delete(playerId);
-            }, 60_1000),
+            }, 60_000),
         );
     }
 
