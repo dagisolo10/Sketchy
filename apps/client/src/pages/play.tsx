@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { SignalIndicator } from "@/components/ui/signal-indicator";
+import { useToast } from "@/contexts/toast-context";
 import { useCreateRoom, useJoinRoom } from "@/hooks/tan-stack/room";
 import { useGetOrCreateSession, useUpdatePlayerName } from "@/hooks/tan-stack/session";
 import { KeyRound, Plus, User2, UserCheck2 } from "lucide-react";
@@ -10,8 +11,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 export default function PlayPage() {
+    const toast = useToast();
     const router = useNavigate();
-
     const { data: player } = useGetOrCreateSession();
 
     const [roomId, setRoomId] = useState("");
@@ -22,8 +23,14 @@ export default function PlayPage() {
     const [playerName, setPlayerName] = useState(player?.name ?? "User");
 
     const updateNameMt = useUpdatePlayerName();
-    const joinRoomMt = useJoinRoom({ onSuccess: ({ roomId }) => router("/room/" + roomId) });
-    const createRoomMt = useCreateRoom({ onSuccess: ({ roomId }) => router("/room/" + roomId) });
+    const joinRoomMt = useJoinRoom({
+        onSuccess: ({ roomId }) => router("/room/" + roomId),
+        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to join room" }),
+    });
+    const createRoomMt = useCreateRoom({
+        onSuccess: ({ roomId }) => router("/room/" + roomId),
+        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to create room" }),
+    });
 
     const roomSettings = [
         { label: "PLAYER LIMIT", value: playerLimit, valueLabel: "PLAYERS", min: 1, step: 1, onChange: setPlayerLimit },
@@ -151,7 +158,7 @@ export default function PlayPage() {
                                 className="bg-background/60 focus-visible:border-primary h-14 rounded-none border-slate-800 px-4 text-center text-xl font-black tracking-[0.4em] text-white uppercase placeholder:tracking-[0.4em] placeholder:text-slate-700 focus-visible:ring-0"
                             />
 
-                            <Button size="lg" disabled={joinRoomMt.isPending} className="h-14 w-full gap-2 rounded-none text-base font-bold tracking-wider uppercase">
+                            <Button size="lg" type="submit" disabled={joinRoomMt.isPending} className="h-14 w-full gap-2 rounded-none text-base font-bold tracking-wider uppercase">
                                 JOIN ROOM
                             </Button>
 

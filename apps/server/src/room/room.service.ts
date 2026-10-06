@@ -1,3 +1,4 @@
+import { GameStateService } from "@/game/game.state.service.js";
 import { CreateRoomDto } from "@/room/room.dto.js";
 import { RoomStore } from "@/room/room.store.js";
 import { SessionContext } from "@/session/session.context.js";
@@ -14,6 +15,7 @@ export class RoomService {
         private readonly sessionService: SessionService,
         private readonly sessionContext: SessionContext,
         private readonly socketIoService: SocketIoService,
+        private readonly gameStateService: GameStateService,
     ) {}
 
     private countdownIntervals = new Map<string, NodeJS.Timeout>();
@@ -163,6 +165,8 @@ export class RoomService {
 
             this.countdownIntervals.set(roomId, interval);
         }
+
+        this.gameStateService.prepareGame(room);
     }
 
     private validateRoom(roomId: string) {
@@ -171,7 +175,7 @@ export class RoomService {
         const player = this.sessionService.getPlayerBySession(sessionId);
 
         if (!player) {
-            throw new Error("You are not in the session");
+            throw new BadRequestException("You are not in the session");
         }
 
         const room = this.roomStore.getRoom(roomId);

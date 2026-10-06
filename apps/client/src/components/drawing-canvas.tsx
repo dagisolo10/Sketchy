@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { cn } from "cn";
-import { Circle, Eraser, Pen, Redo, Trash2, Undo } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Circle, Eraser, Pen, Redo, Trash2, Undo } from "lucide-react";
 
 type Tool = "pen" | "eraser";
 type PenSize = "thin" | "medium" | "thick" | "very-thick";
@@ -18,7 +18,7 @@ interface Point {
     y: number;
 }
 
-export default function DrawingCanvas() {
+export default function DrawingCanvas({ myTurn }: { myTurn: boolean }) {
     const isDrawingRef = useRef(false);
     const currentStrokeRef = useRef<Point[]>([]);
     const lastPointRef = useRef<Point | null>(null);
@@ -269,6 +269,7 @@ export default function DrawingCanvas() {
                     <Button
                         size="sm"
                         type="button"
+                        disabled={!myTurn}
                         onClick={() => setTool("pen")}
                         variant={tool === "pen" ? "default" : "outline"}
                         className={cn("gap-2 rounded-none border-slate-800", tool === "pen" && "glow-primary")}
@@ -280,6 +281,7 @@ export default function DrawingCanvas() {
                     <Button
                         size="sm"
                         type="button"
+                        disabled={!myTurn}
                         onClick={() => setTool("eraser")}
                         variant={tool === "eraser" ? "default" : "outline"}
                         className={cn("gap-2 rounded-none border-slate-800", tool === "eraser" && "glow-primary")}
@@ -300,8 +302,9 @@ export default function DrawingCanvas() {
                                     key={s}
                                     type="button"
                                     size="icon-sm"
-                                    onClick={() => setPenSize(s)}
+                                    disabled={!myTurn}
                                     title={s.replace("-", " ")}
+                                    onClick={() => setPenSize(s)}
                                     variant={isActive ? "default" : "ghost"}
                                     className={cn("rounded-none border-slate-800", isActive && "glow-primary")}
                                 >
@@ -313,17 +316,17 @@ export default function DrawingCanvas() {
 
                     <div className="h-6 w-px bg-slate-800" />
 
-                    <Button type="button" variant="ghost" size="sm" onClick={handleUndo} disabled={!canUndo} className="gap-2 rounded-none border-slate-800">
+                    <Button type="button" variant="ghost" size="sm" onClick={handleUndo} disabled={!canUndo || !myTurn} className="gap-2 rounded-none border-slate-800">
                         <Undo className="size-4" />
                         UNDO
                     </Button>
 
-                    <Button type="button" variant="ghost" size="sm" onClick={handleRedo} disabled={!canRedo} className="gap-2 rounded-none border-slate-800">
+                    <Button type="button" variant="ghost" size="sm" onClick={handleRedo} disabled={!canRedo || !myTurn} className="gap-2 rounded-none border-slate-800">
                         <Redo className="size-4" />
                         REDO
                     </Button>
 
-                    <Button type="button" variant="destructive" size="sm" onClick={handleClear} className="gap-2 rounded-none">
+                    <Button type="button" disabled={!myTurn} variant="destructive" size="sm" onClick={handleClear} className="gap-2 rounded-none">
                         <Trash2 className="size-4" />
                         CLEAR
                     </Button>

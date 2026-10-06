@@ -1,12 +1,12 @@
-import NavLink from "@/components/link";
-import { Button } from "@/components/ui/button";
-import { useSocket } from "@/contexts/socket-context";
-import { useToast } from "@/contexts/toast-context";
-import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
-import { api, requestApi } from "@/lib/axios";
 import { cn } from "cn";
-import { Clock, Eye, LogOut, Unlock, Vote, Zap } from "lucide-react";
 import { useEffect } from "react";
+import NavLink from "@/components/link";
+import { api, requestApi } from "@/lib/axios";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/contexts/toast-context";
+import { useSocket } from "@/contexts/socket-context";
+import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
+import { Clock, Eye, LogOut, Unlock, Vote, Zap } from "lucide-react";
 
 const STEPS = [
     {
@@ -91,7 +91,7 @@ export default function HomePage() {
 
             socket?.disconnect();
         } catch (error) {
-            console.log("Error while logging out", error);
+            console.error("Error while logging out", error);
         }
     }
 

@@ -23,9 +23,9 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
     }
 
     handleConnection(client: TypedSocket) {
-        console.log();
+        // console.log();
 
-        console.log("⏰ Connecting to socket...");
+        // console.log("⏰ Connecting to socket...");
 
         const cookieHeader = client.handshake.headers.cookie;
 
@@ -56,9 +56,11 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
         client.data.player = player;
         client.data.sessionId = sessionId;
 
-        console.log("✅ Socket connected", player.name);
+        client.join(player.playerId);
 
-        console.log("--------------------------");
+        // console.log("✅ Socket connected", player.name);
+
+        // console.log("--------------------------");
     }
 
     handleDisconnect(client: TypedSocket) {
@@ -68,6 +70,6 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
             this.authService.startDisconnectGracePeriod(player.playerId, sessionId);
         }
 
-        console.log("❌ Socket disconnected");
+        // console.log("❌ Socket disconnected");
     }
 }

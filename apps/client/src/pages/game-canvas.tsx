@@ -1,3 +1,4 @@
+import IntroPage from "./intro";
 import NotFound from "./not-found";
 
 import DrawingCanvas from "@/components/drawing-canvas";
@@ -5,20 +6,15 @@ import GameShell from "@/components/game-shell";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Countdown } from "@/components/ui/countdown";
+import { useSocket } from "@/contexts/socket-context";
 import { useGetRoom } from "@/hooks/tan-stack/room";
-import type { Room } from "@package/types";
+import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
+import { getInitials } from "@/utils/helpers";
+import { DRAWING_DURATION, type Game, type Role, type Room } from "@package/types";
 import { cn } from "cn";
 import { LogOut, Paintbrush } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-
-const MOCK_PLAYERS = [
-    { name: "Dagmawi", initials: "DA", drawing: true, connection: 96 },
-    { name: "Ayakashi", initials: "AY", drawing: false, connection: 90 },
-    { name: "Natty", initials: "NA", drawing: false, connection: 82 },
-    { name: "Samuel", initials: "SA", drawing: false, connection: 88 },
-    { name: "Mike", initials: "MI", drawing: false, connection: 76 },
-    { name: "Alex", initials: "AL", drawing: false, connection: 70 },
-];
 
 export default function GameCanvasLayout() {
     const { roomId = "" } = useParams<{ roomId: string }>();
@@ -33,7 +29,53 @@ export default function GameCanvasLayout() {
 }
 
 function GameCanvasPage({ room }: { room: Room }) {
-    const drawer = MOCK_PLAYERS.find((p) => p.drawing);
+    const { socket } = useSocket();
+    const { data: player } = useGetOrCreateSession();
+
+    const [round, setRound] = useState(1);
+    const [myTurn, setMyTurn] = useState(false);
+    const [role, setRole] = useState<Role>("imposter");
+    const [game, setGame] = useState<Game | null>(null);
+    const [introFinished, setIntroFinished] = useState(false);
+    const [remaining, setRemaining] = useState(DRAWING_DURATION);
+    const [secretWord, setSecretWord] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on("game:state", ({ game }) => setGame(game));
+        socket.on("game:round_count", ({ round }) => setRound(round));
+        socket.on("game:timer", ({ remaining }) => setRemaining(remaining));
+        socket.on("game:next_turn", ({ activePlayer }) => {
+            setGame((game) => (game ? { ...game, activePlayer } : game));
+            setMyTurn(activePlayer.playerId === player?.playerId);
+        });
+        socket.on("game:role", ({ role, secretWord }) => {
+            setRole(role);
+            setSecretWord(secretWord);
+        });
+
+        socket.emit("game:reveal:role", { roomId: room.roomId });
+        socket.emit("game:get:state", { roomId: room.roomId });
+
+        return () => {
+            socket.off("game:role");
+            socket.off("game:state");
+        };
+    }, [player?.playerId, room.roomId, socket]);
+
+    if (!introFinished) {
+        return (
+            <IntroPage
+                role={role}
+                secretWord={secretWord}
+                onComplete={() => {
+                    setIntroFinished(true);
+                    if (socket) socket.emit("game:started", { roomId: room.roomId });
+                }}
+            />
+        );
+    }
 
     return (
         <GameShell
@@ -63,15 +105,18 @@ function GameCanvasPage({ room }: { room: Room }) {
                     <div className="hud-box bg-card col-span-1 flex flex-col overflow-hidden border border-slate-800 lg:col-span-3">
                         <div className="bg-card/60 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 px-4 py-3">
                             <div className="flex items-center gap-3">
-                                <Paintbrush className="text-primary size-4" />
-                                <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">ACTIVE DRAWER</span>
-                                <span className="text-primary text-sm font-black tracking-wide uppercase">{drawer?.name ?? "..."}</span>
+                                <Paintbrush className="text-primary size-5" />
+                                <Countdown label="ACTIVE DRAWER" value={game?.activePlayer?.name ?? "..."} variant="danger" />
                             </div>
-                            <Countdown label="TIME LEFT" value="00:30" variant="warning" />
+
+                            <div className="flex items-center gap-4">
+                                <Countdown label="ROUND" value={round.toString()} variant="danger" />
+                                <Countdown label="TIME LEFT" value={`00:${remaining.toString().padStart(2, "0")}`} variant="warning" />
+                            </div>
                         </div>
 
                         <div className="flex h-[calc(100vh-20rem)] min-h-95 flex-col lg:h-[calc(100vh-14rem)]">
-                            <DrawingCanvas />
+                            <DrawingCanvas myTurn={myTurn} />
                         </div>
                     </div>
 
@@ -79,24 +124,28 @@ function GameCanvasPage({ room }: { room: Room }) {
                         <div className="bg-card border border-slate-800 p-4">
                             <div className="mb-3 text-xs font-bold tracking-widest text-slate-400 uppercase">PLAYERS</div>
                             <div className="space-y-2">
-                                {MOCK_PLAYERS.map((p) => (
-                                    <div key={p.name} className="bg-background/40 flex items-center justify-between border border-slate-800 px-3 py-2">
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className={cn(
-                                                    "flex size-7 items-center justify-center border text-[10px] font-black",
-                                                    p.drawing ? "border-primary/60 bg-primary/10 text-primary" : "bg-background/60 border-slate-700 text-slate-400",
-                                                )}
-                                            >
-                                                {p.initials}
+                                {game?.players.map((p) => {
+                                    const drawing = p.playerId === game.activePlayer.playerId;
+
+                                    return (
+                                        <div key={p.name} className="bg-background/40 flex items-center justify-between border border-slate-800 px-3 py-2">
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className={cn(
+                                                        "flex size-7 items-center justify-center border text-[10px] font-black",
+                                                        drawing ? "border-primary/60 bg-primary/10 text-primary" : "bg-background/60 border-slate-700 text-slate-400",
+                                                    )}
+                                                >
+                                                    {getInitials(p.name)}
+                                                </div>
+                                                <span className={cn("text-xs font-bold tracking-wide uppercase", drawing ? "text-primary" : "text-slate-300")}>{p.name}</span>
                                             </div>
-                                            <span className={cn("text-xs font-bold tracking-wide uppercase", p.drawing ? "text-primary" : "text-slate-300")}>{p.name}</span>
+                                            <Chip variant={drawing ? "default" : "default"} selected={drawing} size="sm">
+                                                {drawing ? "DRAWING" : "GUESSING"}
+                                            </Chip>
                                         </div>
-                                        <Chip variant={p.drawing ? "default" : "default"} selected={p.drawing} size="sm">
-                                            {p.drawing ? "DRAWING" : "GUESSING"}
-                                        </Chip>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 

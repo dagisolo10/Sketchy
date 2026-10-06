@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Countdown } from "@/components/ui/countdown";
 import { NumberInput } from "@/components/ui/number-input";
 import { useSocket } from "@/contexts/socket-context";
+import { useToast } from "@/contexts/toast-context";
 import { useGetRoom, useLeaveRoom, usePlayerReady, useStartGame } from "@/hooks/tan-stack/room";
 import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
 import NotFound from "@/pages/not-found";
@@ -27,14 +28,23 @@ export default function RoomPageLayout() {
 }
 
 function RoomPage({ room }: { room: Room }) {
+    const toast = useToast();
     const router = useNavigate();
+
     const { socket } = useSocket();
     const queryClient = useQueryClient();
 
-    const startGameMt = useStartGame();
-    const playerReadyMt = usePlayerReady();
+    const startGameMt = useStartGame({
+        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to start game" }),
+    });
+    const playerReadyMt = usePlayerReady({
+        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to change ready" }),
+    });
     const { data: player } = useGetOrCreateSession();
-    const leaveRoomMt = useLeaveRoom({ onSuccess: () => router("/play") });
+    const leaveRoomMt = useLeaveRoom({
+        onSuccess: () => router("/play"),
+        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to leave room" }),
+    });
 
     const [ready, setReady] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
