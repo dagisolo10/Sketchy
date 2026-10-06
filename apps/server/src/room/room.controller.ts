@@ -1,6 +1,6 @@
 import { CreateRoomDto } from "@/room/room.dto.js";
 import { RoomService } from "@/room/room.service.js";
-import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
 
 @Controller("room")
 export class RoomController {
@@ -34,5 +34,20 @@ export class RoomController {
     @Delete(":roomId")
     deleteRoom(@Param("roomId") roomId: string) {
         return this.roomService.deleteRoom(roomId);
+    }
+
+    @Patch(":roomId/ready")
+    playerReady(@Param("roomId") roomId: string) {
+        return this.roomService.toggleReady(roomId, true);
+    }
+
+    @Patch(":roomId/not-ready")
+    playerNotReady(@Param("roomId") roomId: string) {
+        return this.roomService.toggleReady(roomId, false);
+    }
+
+    @Post(":roomId/start-game")
+    startGame(@Param("roomId") roomId: string) {
+        return this.roomService.startGame(roomId);
     }
 }

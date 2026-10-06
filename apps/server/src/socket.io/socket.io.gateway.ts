@@ -23,28 +23,42 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
     }
 
     handleConnection(client: TypedSocket) {
+        console.log();
+
         console.log("⏰ Connecting to socket...");
 
         const cookieHeader = client.handshake.headers.cookie;
 
         if (!cookieHeader) {
+            client.emit("connection_error", "Cookie is missing");
+            client.disconnect();
             return;
         }
 
         const sessionId = parseCookie(cookieHeader)["session"];
 
-        if (!sessionId) return;
+        if (!sessionId) {
+            client.emit("connection_error", "Session is missing");
+            client.disconnect();
+            return;
+        }
 
         const player = this.authService.getPlayerBySession(sessionId);
 
-        if (!player) return;
+        if (!player) {
+            client.emit("connection_error", "Player session not found");
+            client.disconnect();
+            return;
+        }
 
         this.authService.cancelDisconnectGracePeriod(player.playerId);
 
         client.data.player = player;
         client.data.sessionId = sessionId;
 
-        console.log("✅ Socket connected", client.data.player);
+        console.log("✅ Socket connected", player.name);
+
+        console.log("--------------------------");
     }
 
     handleDisconnect(client: TypedSocket) {

@@ -1,19 +1,18 @@
+import { Chip } from "@/components/ui/chip";
+import { SignalIndicator } from "@/components/ui/signal-indicator";
+import { getInitials } from "@/utils/helpers";
+import type { Player } from "@package/types";
 import { cn } from "cn";
 import { Crown } from "lucide-react";
-import { Chip } from "@/components/ui/chip";
-import type { Player } from "@package/types";
-import { getInitials } from "@/utils/helpers";
-import { SignalIndicator } from "@/components/ui/signal-indicator";
 
 interface PlayerCardProps {
-    player: Player;
     host: boolean;
+    player: Player;
 }
 
-export default function PlayerCard({ player, host }: PlayerCardProps) {
-    const ready = false;
+export default function PlayerCard({ player: { name, ready }, host }: PlayerCardProps) {
     const connection = 99;
-    const initials = getInitials(player.name);
+    const initials = getInitials(name);
 
     return (
         <article
@@ -45,7 +44,7 @@ export default function PlayerCard({ player, host }: PlayerCardProps) {
             </div>
 
             <div className="flex flex-col items-center gap-2">
-                <p className={cn("text-base font-bold tracking-wide uppercase transition-colors sm:text-lg", host ? "text-primary" : ready ? "text-white" : "text-slate-400")}>{player.name}</p>
+                <p className={cn("text-base font-bold tracking-wide uppercase transition-colors sm:text-lg", host ? "text-primary" : ready ? "text-white" : "text-slate-400")}>{name}</p>
             </div>
 
             <div className="mt-auto flex w-full items-center justify-between gap-2 border-t border-slate-800 pt-4">

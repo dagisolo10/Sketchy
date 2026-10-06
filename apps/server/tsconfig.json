@@ -1,12 +1,12 @@
 {
     "compilerOptions": {
-        "module": "nodenext",
-        "moduleResolution": "nodenext",
-        "rootDir": ".",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+
         "strict": true,
         "sourceMap": true,
         "target": "ES2023",
-        "outDir": "./dist",
+
         "declaration": true,
         "incremental": false,
         "skipLibCheck": true,
@@ -20,21 +20,23 @@
         "allowSyntheticDefaultImports": true,
         "strictPropertyInitialization": false,
 
-        "paths": {
-            "@/*": ["./src/*"]
-        },
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "paths": { "@/*": ["./src/*"] },
 
         "noImplicitAny": true,
         "noUnusedLocals": true,
+        "strictNullChecks": true,
         "noErrorTruncation": true,
         "noUnusedParameters": true,
         "allowUnusedLabels": false,
-        // "erasableSyntaxOnly": true,
         "noImplicitOverride": true,
         "allowUnreachableCode": false,
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true,
         "forceConsistentCasingInFileNames": true,
         "noPropertyAccessFromIndexSignature": true
-    }
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
 }

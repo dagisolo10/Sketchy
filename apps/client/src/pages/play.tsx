@@ -4,29 +4,26 @@ import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { SignalIndicator } from "@/components/ui/signal-indicator";
 import { useCreateRoom, useJoinRoom } from "@/hooks/tan-stack/room";
-import { useUpdatePlayerName } from "@/hooks/tan-stack/session";
-import type { Player } from "@package/types";
-import { useQueryClient } from "@tanstack/react-query";
+import { useGetOrCreateSession, useUpdatePlayerName } from "@/hooks/tan-stack/session";
 import { KeyRound, Plus, User2, UserCheck2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
 export default function PlayPage() {
-    const queryClient = useQueryClient();
-    const player = queryClient.getQueryData<Player>(["session"]);
-
     const router = useNavigate();
+
+    const { data: player } = useGetOrCreateSession();
 
     const [roomId, setRoomId] = useState("");
     const [isSaved, setIsSaved] = useState(false);
     const [playerLimit, setPlayerLimit] = useState(6);
     const [drawingTime, setDrawingTime] = useState(30);
-    const [playerName, setPlayerName] = useState(player?.name ?? "User");
     const [imposterCount, setImposterCount] = useState(1);
+    const [playerName, setPlayerName] = useState(player?.name ?? "User");
 
     const updateNameMt = useUpdatePlayerName();
-    const joinRoomMt = useJoinRoom({ onSuccess: ({ roomId }) => router(`/room/${roomId}`) });
-    const createRoomMt = useCreateRoom({ onSuccess: ({ roomId }) => router(`/room/${roomId}`) });
+    const joinRoomMt = useJoinRoom({ onSuccess: ({ roomId }) => router("/room/" + roomId) });
+    const createRoomMt = useCreateRoom({ onSuccess: ({ roomId }) => router("/room/" + roomId) });
 
     const roomSettings = [
         { label: "PLAYER LIMIT", value: playerLimit, valueLabel: "PLAYERS", min: 1, step: 1, onChange: setPlayerLimit },
@@ -34,16 +31,28 @@ export default function PlayPage() {
         { label: "DRAWING TIME", value: drawingTime, valueLabel: "SECONDS", min: 10, step: 5, onChange: setDrawingTime },
     ];
 
-    const handleSaveName = (e: React.SubmitEvent<HTMLFormElement>) => {
+    function saveName(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
 
-        if (!playerName.trim()) return;
+        const name = playerName.trim();
 
-        updateNameMt.mutate({ name: playerName.trim() });
+        if (!name) return;
+
+        updateNameMt.mutate({ name });
 
         setIsSaved(true);
         setTimeout(() => setIsSaved(false), 2000);
-    };
+    }
+
+    function joinRoom(e: React.SubmitEvent<HTMLFormElement>) {
+        e.preventDefault();
+
+        const normalized = roomId.trim().toUpperCase();
+
+        if (!normalized) return;
+
+        joinRoomMt.mutate({ roomId: normalized });
+    }
 
     return (
         <GameShell>
@@ -66,7 +75,7 @@ export default function PlayPage() {
                             <p className="text-slate-400">This name will be visible to all players in the room.</p>
                         </div>
 
-                        <form onSubmit={handleSaveName} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <form onSubmit={saveName} className="flex flex-col gap-3 sm:flex-row sm:items-center">
                             <Input
                                 type="text"
                                 value={playerName}
@@ -126,7 +135,7 @@ export default function PlayPage() {
                         <h2 className="mb-2 text-2xl font-black tracking-tight uppercase transition-colors sm:text-3xl">JOIN A GAME</h2>
                         <p className="mb-8 text-lg text-slate-400">Got an invite? Enter the room code.</p>
 
-                        <div className="mt-auto space-y-3">
+                        <form onSubmit={joinRoom} className="mt-auto space-y-3">
                             <label htmlFor="room-code" className="text-sm font-bold tracking-widest text-slate-400 uppercase">
                                 ROOM CODE
                             </label>
@@ -142,17 +151,12 @@ export default function PlayPage() {
                                 className="bg-background/60 focus-visible:border-primary h-14 rounded-none border-slate-800 px-4 text-center text-xl font-black tracking-[0.4em] text-white uppercase placeholder:tracking-[0.4em] placeholder:text-slate-700 focus-visible:ring-0"
                             />
 
-                            <Button
-                                size="lg"
-                                disabled={joinRoomMt.isPending}
-                                onClick={() => joinRoomMt.mutate({ roomId: roomId.trim().toUpperCase() })}
-                                className="h-14 w-full gap-2 rounded-none text-base font-bold tracking-wider uppercase"
-                            >
+                            <Button size="lg" disabled={joinRoomMt.isPending} className="h-14 w-full gap-2 rounded-none text-base font-bold tracking-wider uppercase">
                                 JOIN ROOM
                             </Button>
 
                             <p className="text-center text-xs font-semibold tracking-wider text-slate-500 uppercase">Room codes are 5 characters and not case sensitive.</p>
-                        </div>
+                        </form>
                     </div>
                 </div>
 

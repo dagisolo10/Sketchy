@@ -1,16 +1,24 @@
 {
     "name": "@package/types",
-    "module": "index.ts",
-    "type": "module",
-    "types": "index.ts",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
     "exports": {
-        ".": "./src/index.ts"
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/node": "^26.6.4",
+        "typescript": "^7.0.2"
     },
     "private": true,
-    "devDependencies": {
-        "@types/bun": "latest"
-    },
-    "peerDependencies": {
-        "typescript": "^7"
-    }
+    "type": "module",
+    "types": "./dist/index.d.ts"
 }

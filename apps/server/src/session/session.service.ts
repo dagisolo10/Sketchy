@@ -8,10 +8,16 @@ export class SessionService {
     private disconnectTimers = new Map<string, NodeJS.Timeout>();
 
     getOrCreateSession() {
+        console.log();
+
         const playerId = ulid();
         const sessionId = ulid();
 
-        const player: Player = { name: `User-${playerId.slice(playerId.length - 3, playerId.length)}`, playerId };
+        const player: Player = {
+            playerId,
+            ready: false,
+            name: `User-${playerId.slice(playerId.length - 3, playerId.length)}`,
+        };
 
         this.sessions.set(sessionId, player);
 
@@ -36,11 +42,9 @@ export class SessionService {
             throw new UnauthorizedException("You don't have an active session");
         }
 
-        const updatedPlayer: Player = { name, playerId: player.playerId };
+        player.name = name;
 
-        this.sessions.set(sessionId, updatedPlayer);
-
-        return updatedPlayer;
+        return player;
     }
 
     startDisconnectGracePeriod(playerId: string, sessionId: string) {

@@ -1,11 +1,12 @@
-import { cn } from "cn";
 import NavLink from "@/components/link";
-import type { Player } from "@package/types";
-import { api, requestApi } from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { useSocket } from "@/contexts/socket-context";
-import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/contexts/toast-context";
+import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
+import { api, requestApi } from "@/lib/axios";
+import { cn } from "cn";
 import { Clock, Eye, LogOut, Unlock, Vote, Zap } from "lucide-react";
+import { useEffect } from "react";
 
 const STEPS = [
     {
@@ -51,10 +52,38 @@ const STEPS = [
 ];
 
 export default function HomePage() {
-    const queryClient = useQueryClient();
-    const player = queryClient.getQueryData<Player>(["session"]);
+    const { data: player, error, isLoading, isSuccess } = useGetOrCreateSession();
 
+    const toast = useToast();
     const { connected, socket } = useSocket();
+
+    const TOAST_ID = "session-loading-toast";
+
+    useEffect(() => {
+        if (isLoading) {
+            toast.addToast({
+                id: TOAST_ID,
+                duration: Infinity,
+                variant: "loading",
+                title: "Connecting",
+                description: "Creating your session...",
+            });
+        }
+
+        if (error) {
+            toast.removeToast(TOAST_ID);
+            toast.addToast({
+                variant: "error",
+                title: "Session Error",
+                description: error.message,
+            });
+        }
+
+        if (isSuccess) {
+            toast.removeToast(TOAST_ID);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading, error, isSuccess]);
 
     async function logout() {
         try {

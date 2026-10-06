@@ -1,8 +1,8 @@
 import { SocketContext, type TypedSocket } from "@/contexts/socket-context";
 import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
 import { SERVER_URL } from "@/lib/axios";
-import type { ClientData, ClientEvents } from "@package/types";
-import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
+import type { ServerToClientEvents } from "@package/types";
+import { useEffect, useState, type PropsWithChildren } from "react";
 import { io, type ExtendedError } from "socket.io-client";
 
 export default function SocketProvider({ children }: PropsWithChildren) {
@@ -23,6 +23,10 @@ export default function SocketProvider({ children }: PropsWithChildren) {
         console.error("Error connecting to socket:", error);
     }
 
+    function onConnectionError(error: Parameters<ServerToClientEvents["connection_error"]>[0]) {
+        console.error("Error connecting to socket:", error);
+    }
+
     useEffect(() => {
         if (!player) return;
 
@@ -31,11 +35,12 @@ export default function SocketProvider({ children }: PropsWithChildren) {
             reconnection: true,
             withCredentials: true,
             transports: ["websocket"],
-        });
+        }) as TypedSocket;
 
         socketInstance.on("connect", onConnect);
         socketInstance.on("disconnect", onDisconnect);
         socketInstance.on("connect_error", onConnectError);
+        socketInstance.on("connection_error", onConnectionError);
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSocket(socketInstance);
@@ -44,15 +49,9 @@ export default function SocketProvider({ children }: PropsWithChildren) {
             socketInstance.off("connect", onConnect);
             socketInstance.off("disconnect", onDisconnect);
             socketInstance.off("connect_error", onConnectError);
+            socketInstance.off("connection_error", onConnectionError);
         };
     }, [player]);
 
-    const emit = useCallback(
-        <Event extends ClientEvents>(event: Event, ...args: ClientData<Event>) => {
-            if (socket && socket.connected) socket.emit(event, ...args);
-        },
-        [socket],
-    );
-
-    return <SocketContext.Provider value={{ connected, socket, emit }}>{children}</SocketContext.Provider>;
+    return <SocketContext.Provider value={{ connected, socket }}>{children}</SocketContext.Provider>;
 }

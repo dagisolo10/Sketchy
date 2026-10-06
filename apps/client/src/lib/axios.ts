@@ -22,7 +22,8 @@ export async function requestApi<T>(request: () => Promise<{ data: T | ApiError 
         const { data } = await request();
 
         if (hasApiError(data)) {
-            throw data.message;
+            const msg = Array.isArray(data.message) ? data.message.join(", ") : data.message;
+            throw new Error(msg || "Request failed");
         }
 
         return data;
@@ -30,11 +31,15 @@ export async function requestApi<T>(request: () => Promise<{ data: T | ApiError 
         if (isAxiosError(error) && error.response?.data) {
             const serverData = error.response.data as { message?: string | string[] };
 
-            const message = Array.isArray(serverData.message) ? serverData.message[0] : serverData.message;
+            const message = Array.isArray(serverData.message) ? serverData.message.join(", ") : serverData.message;
 
-            throw message || "Network request failed";
+            throw new Error(message || "Network request failed", { cause: error });
         }
 
-        throw error;
+        if (error instanceof Error) {
+            throw error;
+        }
+
+        throw new Error(typeof error === "string" ? error : "An unexpected error occurred", { cause: error });
     }
 }
