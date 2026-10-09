@@ -18,10 +18,6 @@ export class RoomStore {
         return room;
     }
 
-    setRooms(rooms: Room[]): void {
-        this.rooms = rooms;
-    }
-
     removeRoom(roomId: string): void {
         this.rooms = this.rooms.filter((room) => room.roomId !== roomId);
     }

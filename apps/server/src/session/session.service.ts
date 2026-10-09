@@ -8,8 +8,6 @@ export class SessionService {
     private disconnectTimers = new Map<string, NodeJS.Timeout>();
 
     getOrCreateSession() {
-        // console.log();
-
         const playerId = ulid();
         const sessionId = ulid();
 
@@ -21,14 +19,11 @@ export class SessionService {
 
         this.sessions.set(sessionId, player);
 
-        // console.log("✅ Session created", this.sessions.size);
-
         return { player, sessionId };
     }
 
     deleteSession(sessionId: string) {
         this.sessions.delete(sessionId);
-        // console.log("Session deleted ❌", this.sessions.size);
     }
 
     getPlayerBySession(sessionId: string) {
@@ -48,8 +43,6 @@ export class SessionService {
     }
 
     startDisconnectGracePeriod(playerId: string, sessionId: string) {
-        // console.log("⏰ starting disconnect grace period");
-
         this.disconnectTimers.set(
             playerId,
             setTimeout(() => {
@@ -60,8 +53,6 @@ export class SessionService {
     }
 
     cancelDisconnectGracePeriod(playerId: string) {
-        // console.log("⏰ ❌ cancelling disconnect grace period");
-
         const timeout = this.disconnectTimers.get(playerId);
 
         if (!timeout) return;

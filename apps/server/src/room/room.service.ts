@@ -71,25 +71,23 @@ export class RoomService {
 
         room.players.push({ ...player, ready: false });
 
+        this.socketIoService.emitTo("player:joined", roomId, { room });
+
         return room;
     }
 
-    leaveRoom(roomId: string) {
-        const { player } = this.validateRoom(roomId);
-        const rooms = this.roomStore.getRooms();
+    async leaveRoom(roomId: string) {
+        const { player, room } = this.validateRoom(roomId);
 
-        this.socketIoService.emitTo("player:left:room", roomId, { roomId });
+        room.players = room.players.filter(({ playerId }) => playerId !== player.playerId);
 
-        this.roomStore.setRooms(
-            rooms.map((room) =>
-                room.roomId === roomId
-                    ? {
-                          ...room,
-                          players: room.players.filter((p) => p.playerId !== player.playerId),
-                      }
-                    : room,
-            ),
-        );
+        const socket = this.socketIoService.getPlayerSocket(player.playerId);
+
+        if (socket) {
+            await socket.leave(roomId);
+        }
+
+        this.socketIoService.emitTo("player:left:room", roomId, { room });
     }
 
     deleteRoom(roomId: string) {
@@ -100,6 +98,8 @@ export class RoomService {
         }
 
         this.roomStore.removeRoom(roomId);
+
+        // emit to all players in the room that the room has been deleted
     }
 
     toggleReady(roomId: string, ready: boolean) {
@@ -113,7 +113,7 @@ export class RoomService {
 
         roomPlayer.ready = ready;
 
-        this.socketIoService.emitTo("player:ready:updated", roomId, { roomId });
+        this.socketIoService.emitTo("player:ready:updated", roomId, { room });
     }
 
     startGame(roomId: string) {
@@ -141,7 +141,7 @@ export class RoomService {
 
         room.status = "starting";
 
-        this.socketIoService.emitTo("room:game:starting", roomId, { roomId });
+        this.socketIoService.emitTo("room:game:starting", roomId, { room });
 
         const roomInterval = this.countdownIntervals.get(roomId);
 
@@ -153,14 +153,14 @@ export class RoomService {
 
                     room.status = "playing";
 
-                    this.socketIoService.emitTo("room:game:started", roomId, { roomId });
+                    this.socketIoService.emitTo("room:game:intro:started", roomId, { roomId });
 
                     return;
                 }
 
                 room.countdown -= 1;
 
-                this.socketIoService.emitTo("room:game:countdown", roomId, { count: room.countdown });
+                this.socketIoService.emitTo("room:game:countdown", roomId, { countdown: room.countdown, roomId });
             }, 1000);
 
             this.countdownIntervals.set(roomId, interval);

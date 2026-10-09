@@ -5,10 +5,10 @@ import { Countdown } from "@/components/ui/countdown";
 import { NumberInput } from "@/components/ui/number-input";
 import { useSocket } from "@/contexts/socket-context";
 import { useToast } from "@/contexts/toast-context";
-import { useGetRoom, useLeaveRoom, usePlayerReady, useStartGame } from "@/hooks/tan-stack/room";
+import { useGetRoom, useJoinRoom, useLeaveRoom, usePlayerReady, useStartGame } from "@/hooks/tan-stack/room";
 import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
 import NotFound from "@/pages/not-found";
-import { COUNTER_START_TIME, MIN_PLAYERS, type Room } from "@package/types";
+import { MIN_PLAYERS, type Room } from "@package/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "cn";
 import { Check, Copy, LogOut, Play } from "lucide-react";
@@ -28,23 +28,18 @@ export default function RoomPageLayout() {
 }
 
 function RoomPage({ room }: { room: Room }) {
+    const roomId = room.roomId;
     const toast = useToast();
     const router = useNavigate();
 
     const { socket } = useSocket();
     const queryClient = useQueryClient();
 
-    const startGameMt = useStartGame({
-        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to start game" }),
-    });
-    const playerReadyMt = usePlayerReady({
-        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to change ready" }),
-    });
     const { data: player } = useGetOrCreateSession();
-    const leaveRoomMt = useLeaveRoom({
-        onSuccess: () => router("/play"),
-        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to leave room" }),
-    });
+    const joinRoomMt = useJoinRoom({ onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to join room" }) });
+    const startGameMt = useStartGame({ onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to start game" }) });
+    const playerReadyMt = usePlayerReady({ onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to change ready" }) });
+    const leaveRoomMt = useLeaveRoom({ onSuccess: () => router("/play"), onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to leave room" }) });
 
     const [ready, setReady] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -52,8 +47,6 @@ function RoomPage({ room }: { room: Room }) {
     const [playerLimit, setPlayerLimit] = useState(6);
     const [drawingTime, setDrawingTime] = useState(30);
     const [imposterCount, setImposterCount] = useState(1);
-
-    const [countdown, setCountdown] = useState(COUNTER_START_TIME);
 
     const readyCount = room.players.filter(({ ready }) => ready).length;
 
@@ -70,52 +63,54 @@ function RoomPage({ room }: { room: Room }) {
     ];
 
     useEffect(() => {
-        if (!socket) {
-            return;
-        }
+        if (!socket) return;
 
         socket.on("room:state", ({ room }) => {
-            queryClient.setQueryData<Room>(["room", room.roomId], room);
+            queryClient.setQueryData<Room>(["room", roomId], room);
 
             if (room.status === "playing") {
-                router(`/game/${room.roomId}`);
-                return;
+                router(`/room/${roomId}/game`);
             }
-
-            setCountdown(room.countdown);
         });
 
-        socket.on("room:game:countdown", ({ count }) => setCountdown(count));
-        socket.on("room:game:started", ({ roomId }) => router(`/game/${roomId}`));
-        socket.on("player:joined", ({ roomId }) => queryClient.invalidateQueries({ queryKey: ["room", roomId] }));
-        socket.on("player:left:room", ({ roomId }) => queryClient.invalidateQueries({ queryKey: ["room", roomId] }));
-        socket.on("room:game:starting", ({ roomId }) => queryClient.invalidateQueries({ queryKey: ["room", roomId] }));
-        socket.on("player:ready:updated", ({ roomId }) => queryClient.invalidateQueries({ queryKey: ["room", roomId] }));
+        socket.on("room:game:intro:started", ({ roomId }) => router(`/room/${roomId}/intro`));
+        socket.on("room:game:starting", ({ room }) => queryClient.setQueryData<Room>(["room", roomId], room));
+        socket.on("room:game:countdown", ({ countdown, roomId }) => queryClient.setQueryData<Room>(["room", roomId], { ...room, countdown }));
 
-        socket.emit("room:joined", { roomId: room.roomId });
-        socket.emit("room:get:state", { roomId: room.roomId });
+        socket.on("player:joined", ({ room }) => queryClient.setQueryData<Room>(["room", roomId], room));
+        socket.on("player:left:room", ({ room }) => queryClient.setQueryData<Room>(["room", roomId], room));
+        socket.on("player:ready:updated", ({ room }) => queryClient.setQueryData<Room>(["room", roomId], room));
+
+        if (!room.players.some(({ playerId }) => playerId === player?.playerId)) {
+            joinRoomMt.mutate({ roomId });
+        }
+
+        socket.emit("room:joined", { roomId: roomId });
+        socket.emit("room:get:state", { roomId: roomId });
 
         return () => {
             socket.off("room:state");
             socket.off("player:joined");
             socket.off("player:left:room");
-            socket.off("room:game:started");
             socket.off("room:game:starting");
             socket.off("room:game:countdown");
             socket.off("player:ready:updated");
+            socket.off("room:game:intro:started");
+
+            // add leaving room if path is before room page
         };
-    }, [queryClient, room.roomId, router, socket]);
+    }, [joinRoomMt, player?.playerId, queryClient, room, roomId, router, socket]);
 
     function updateReadyState() {
         const nextReady = !ready;
 
         setReady(nextReady);
 
-        playerReadyMt.mutate({ roomId: room.roomId, ready: nextReady });
+        playerReadyMt.mutate({ roomId: roomId, ready: nextReady });
     }
 
     async function copyRoomCode() {
-        await window.navigator.clipboard.writeText(room.roomId);
+        await window.navigator.clipboard.writeText(roomId);
 
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
@@ -124,13 +119,7 @@ function RoomPage({ room }: { room: Room }) {
     return (
         <GameShell
             trailing={
-                <Button
-                    size="lg"
-                    variant="outline"
-                    disabled={leaveRoomMt.isPending}
-                    onClick={() => leaveRoomMt.mutate({ roomId: room.roomId })}
-                    className="hover:text-primary gap-4 px-4 font-bold tracking-widest uppercase"
-                >
+                <Button size="lg" variant="outline" disabled={leaveRoomMt.isPending} onClick={() => leaveRoomMt.mutate({ roomId: roomId })} className="hover:text-primary gap-4 px-4 font-bold tracking-widest uppercase">
                     <LogOut className="size-4" />
                     LEAVE ROOM
                 </Button>
@@ -142,20 +131,14 @@ function RoomPage({ room }: { room: Room }) {
                         <div className="text-primary text-xl font-bold tracking-widest uppercase">PRIVATE LOBBY</div>
 
                         <h1 className="text-4xl font-black tracking-tight uppercase sm:text-6xl">
-                            ROOM: <span className="text-glow text-primary">{room.roomId}</span>
+                            ROOM: <span className="text-glow text-primary">{roomId}</span>
                         </h1>
                     </div>
 
                     <div className="bg-card flex items-center gap-4 border border-slate-800 px-5 py-4">
                         <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">ROOM CODE</span>
-                        <span className="text-primary text-glow text-2xl font-black tracking-[0.3em]">{room.roomId}</span>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            title="Copy room link"
-                            onClick={copyRoomCode}
-                            className="hover:border-primary hover:text-primary gap-2 rounded-none border-slate-800 font-bold tracking-widest uppercase"
-                        >
+                        <span className="text-primary text-glow text-2xl font-black tracking-[0.3em]">{roomId}</span>
+                        <Button size="sm" variant="outline" title="Copy room link" onClick={copyRoomCode} className="hover:border-primary hover:text-primary gap-2 rounded-none border-slate-800 font-bold tracking-widest uppercase">
                             {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
                             {isCopied ? "COPIED" : "COPY"}
                         </Button>
@@ -170,9 +153,7 @@ function RoomPage({ room }: { room: Room }) {
                                 <div className={cn(canStart ? "text-accent-green text-glow-green" : "text-primary text-glow", "text-4xl font-black tabular-nums")}>
                                     {readyCount} / {playerCount}
                                 </div>
-                                <div className={cn(canStart ? "text-accent-green" : "text-accent-amber", "font-bold tracking-widest uppercase")}>
-                                    {canStart ? "EVERYONE IS READY" : "WAITING FOR EVERYONE TO READY UP"}
-                                </div>
+                                <div className={cn(canStart ? "text-accent-green" : "text-accent-amber", "font-bold tracking-widest uppercase")}>{canStart ? "EVERYONE IS READY" : "WAITING FOR EVERYONE TO READY UP"}</div>
                             </div>
 
                             <div className="flex flex-col items-start gap-4 lg:w-56 lg:items-end">
@@ -203,7 +184,7 @@ function RoomPage({ room }: { room: Room }) {
                             <Button
                                 size="lg"
                                 disabled={!canStart || room.status === "starting"}
-                                onClick={() => startGameMt.mutate({ roomId: room.roomId })}
+                                onClick={() => startGameMt.mutate({ roomId: roomId })}
                                 className="glow-primary h-14 w-full gap-2 rounded-none px-8 text-base font-bold tracking-wider uppercase"
                             >
                                 <Play className="fill-background text-background size-4" />
@@ -232,14 +213,7 @@ function RoomPage({ room }: { room: Room }) {
                             </ul>
                         </div>
 
-                        {room.status === "starting" && (
-                            <Countdown
-                                variant="warning"
-                                label="GAME STARTS IN"
-                                value={`00:${countdown.toString().padStart(2, "0")}`}
-                                className="bg-card flex-1 justify-between border border-slate-800 p-4"
-                            />
-                        )}
+                        {room.status === "starting" && <Countdown variant="warning" label="GAME STARTS IN" value={`00:${room.countdown.toString().padStart(2, "0")}`} className="bg-card flex-1 justify-between border border-slate-800 p-4" />}
                     </aside>
                 </div>
             </section>

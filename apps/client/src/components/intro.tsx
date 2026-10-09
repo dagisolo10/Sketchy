@@ -2,7 +2,7 @@ import { useGSAP } from "@gsap/react";
 import type { Role } from "@package/types";
 import { cn } from "cn";
 import { gsap } from "gsap";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 gsap.registerPlugin(useGSAP);
 
@@ -12,6 +12,11 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
     const NARRATIVE = "LET THE GAMES BEGIN.";
     const DETAIL_A = isImposter ? "You don't know the word." : "Your word";
     const DETAIL_B = isImposter ? "Find it before they find you." : secretWord;
+
+    const onCompleteRef = useRef(onComplete);
+    useEffect(() => {
+        onCompleteRef.current = onComplete;
+    }, [onComplete]);
 
     const envRef = useRef<HTMLDivElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
@@ -25,7 +30,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
 
     useGSAP(
         () => {
-            gsap.set("#ig-wall, #ig-floor", { opacity: 0 });
+            gsap.set("#ig-wall", { opacity: 0 });
             gsap.set("#ig-detail-rule", { opacity: 0, scaleX: 0 });
             gsap.set("#ig-deep", { opacity: 0 });
             gsap.set([narrativeRef.current, yourRoleRef.current, roleRef.current, detailARef.current, detailBRef.current], { opacity: 0 });
@@ -36,12 +41,14 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
             gsap.set(detailARef.current, { filter: "blur(6px)", y: 8 });
             gsap.set(detailBRef.current, { filter: "blur(14px)", y: 6 });
 
-            const tl = gsap.timeline({ defaults: { ease: "power2.out" }, onComplete });
+            const tl = gsap.timeline({
+                defaults: { ease: "power2.out" },
+                onComplete: () => {
+                    onComplete();
+                },
+            });
 
-            tl.addLabel("room", 0.15)
-                .to("#ig-wall", { opacity: 1, duration: 1, ease: "sine.inOut" }, "room")
-                .to("#ig-floor", { opacity: 1, duration: 1, ease: "sine.inOut" }, "room+=0.4")
-                .to(cameraRef.current, { scale: 1.25, duration: 12, ease: "none" }, "room");
+            tl.addLabel("room", 0.15).to("#ig-wall", { opacity: 1, duration: 1, ease: "sine.inOut" }, "room").to(cameraRef.current, { scale: 1.25, duration: 12, ease: "none" }, "room");
 
             tl.addLabel("narrative", 1.5)
                 .to(narrativeRef.current, { opacity: 1, filter: "blur(0px)", y: 0, duration: 1, ease: "power2.out" }, "narrative")
@@ -101,13 +108,18 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
                 .to(["#ig-deep", "#ig-detail-rule"], { opacity: 0, duration: 1.6, ease: "power1.in" }, "ending")
                 .to(envRef.current, { opacity: 0, duration: 1.8, ease: "power2.inOut" }, "ending")
                 .to(finalRef.current, { opacity: 1, duration: 1.8, ease: "power2.inOut" }, "ending+=0.2")
-                .addLabel("end");
+                .addLabel("end")
+                .call(() => {
+                    onCompleteRef.current?.();
+                });
+
+            tl.eventCallback("onComplete", () => onCompleteRef.current?.());
 
             return () => {
                 tl.kill();
             };
         },
-        { scope: rootRef },
+        { scope: rootRef, dependencies: [] },
     );
 
     return (

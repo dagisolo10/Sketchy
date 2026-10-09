@@ -1,8 +1,8 @@
-import type { Player } from "@package/types";
-import { PlayerDto } from "@/types/models.js";
-import type { Request, Response } from "express";
 import { SessionService } from "@/session/session.service.js";
+import { PlayerDto } from "@/types/models.js";
 import { BadRequestException, Body, Controller, Delete, Get, Patch, Req, Res } from "@nestjs/common";
+import type { Player } from "@package/types";
+import type { Request, Response } from "express";
 
 @Controller("session")
 export class SessionController {
@@ -35,8 +35,6 @@ export class SessionController {
             sameSite: "lax",
             secure: !!process.env["SECURE"] || false,
         });
-
-        // console.log("✅ Logged in");
 
         return sessionPlayer;
     }

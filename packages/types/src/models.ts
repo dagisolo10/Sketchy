@@ -38,10 +38,21 @@ export type Point = {
 };
 
 export type Stroke = {
+    tool: Tool;
+    turn: number;
     color: string;
-    userId: string;
     points: Point[];
     active: boolean;
+    playerId: string;
+    penSize: PenSize;
+};
+
+export type DrawingState = {
+    turn: number;
+    strokes: Stroke[];
+    undoHistory: Stroke[];
+    redoHistory: Stroke[];
+    activeStrokes: Map<string, Stroke>;
 };
 
 export type GamePhase = "intro" | "drawing" | "voting";
@@ -49,7 +60,7 @@ export type GamePhase = "intro" | "drawing" | "voting";
 export type Game = {
     round: number;
     playing: boolean;
-    strokes: Stroke[];
+    remaining: number;
     imposterId: string;
     secretWord: string;
     currentIndex: number;
@@ -57,4 +68,6 @@ export type Game = {
     activePlayer: GamePlayer;
 };
 
+export type Tool = "pen" | "eraser";
 export type Role = "civilian" | "imposter";
+export type PenSize = "thin" | "medium" | "thick" | "very-thick";

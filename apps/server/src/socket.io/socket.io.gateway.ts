@@ -22,11 +22,7 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
         this.socketService.setServer(this.server);
     }
 
-    handleConnection(client: TypedSocket) {
-        // console.log();
-
-        // console.log("⏰ Connecting to socket...");
-
+    async handleConnection(client: TypedSocket) {
         const cookieHeader = client.handshake.headers.cookie;
 
         if (!cookieHeader) {
@@ -56,20 +52,20 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
         client.data.player = player;
         client.data.sessionId = sessionId;
 
-        client.join(player.playerId);
+        await client.join(player.playerId);
 
-        // console.log("✅ Socket connected", player.name);
+        this.socketService.setPlayerSocket(player.playerId, client);
 
-        // console.log("--------------------------");
+        console.log("✅ Socket connected", player.name);
     }
 
-    handleDisconnect(client: TypedSocket) {
-        const { player, sessionId } = client.data;
-
+    handleDisconnect({ data: { player, sessionId } }: TypedSocket) {
         if (this.authService.getPlayerBySession(sessionId)) {
             this.authService.startDisconnectGracePeriod(player.playerId, sessionId);
         }
 
-        // console.log("❌ Socket disconnected");
+        this.socketService.removePlayerSocket(player.playerId);
+
+        console.log("❌ Socket disconnected");
     }
 }

@@ -23,14 +23,8 @@ export default function PlayPage() {
     const [playerName, setPlayerName] = useState(player?.name ?? "User");
 
     const updateNameMt = useUpdatePlayerName();
-    const joinRoomMt = useJoinRoom({
-        onSuccess: ({ roomId }) => router("/room/" + roomId),
-        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to join room" }),
-    });
-    const createRoomMt = useCreateRoom({
-        onSuccess: ({ roomId }) => router("/room/" + roomId),
-        onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to create room" }),
-    });
+    const joinRoomMt = useJoinRoom({ onSuccess: ({ roomId }) => router("/room/" + roomId), onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to join room" }) });
+    const createRoomMt = useCreateRoom({ onSuccess: ({ roomId }) => router("/room/" + roomId), onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to create room" }) });
 
     const roomSettings = [
         { label: "PLAYER LIMIT", value: playerLimit, valueLabel: "PLAYERS", min: 1, step: 1, onChange: setPlayerLimit },
@@ -151,10 +145,12 @@ export default function PlayPage() {
                                 type="text"
                                 maxLength={5}
                                 id="room-code"
+                                value={roomId}
                                 autoComplete="off"
                                 spellCheck={false}
                                 placeholder="* * * * *"
                                 onChange={(e) => setRoomId(e.target.value)}
+                                onDoubleClick={async () => setRoomId(await window.navigator.clipboard.readText())}
                                 className="bg-background/60 focus-visible:border-primary h-14 rounded-none border-slate-800 px-4 text-center text-xl font-black tracking-[0.4em] text-white uppercase placeholder:tracking-[0.4em] placeholder:text-slate-700 focus-visible:ring-0"
                             />
 
