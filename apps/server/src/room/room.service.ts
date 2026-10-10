@@ -71,7 +71,7 @@ export class RoomService {
 
         room.players.push({ ...player, ready: false });
 
-        this.socketIoService.emitTo("player:joined", roomId, { room });
+        this.socketIoService.emitTo("player:joined", roomId, { player: { ...player, ready: false } });
 
         return room;
     }
@@ -87,7 +87,7 @@ export class RoomService {
             await socket.leave(roomId);
         }
 
-        this.socketIoService.emitTo("player:left:room", roomId, { room });
+        this.socketIoService.emitTo("player:left:room", roomId, { playerId: player.playerId });
     }
 
     deleteRoom(roomId: string) {
@@ -113,7 +113,7 @@ export class RoomService {
 
         roomPlayer.ready = ready;
 
-        this.socketIoService.emitTo("player:ready:updated", roomId, { room });
+        this.socketIoService.emitTo("player:ready:updated", roomId, { player: roomPlayer });
     }
 
     startGame(roomId: string) {
@@ -141,7 +141,7 @@ export class RoomService {
 
         room.status = "starting";
 
-        this.socketIoService.emitTo("room:game:starting", roomId, { room });
+        this.socketIoService.emitTo("room:game:starting", roomId, { status: room.status });
 
         const roomInterval = this.countdownIntervals.get(roomId);
 
@@ -152,6 +152,7 @@ export class RoomService {
                     this.countdownIntervals.delete(roomId);
 
                     room.status = "playing";
+                    room.countdown = COUNTER_START_TIME;
 
                     this.socketIoService.emitTo("room:game:intro:started", roomId, { roomId });
 

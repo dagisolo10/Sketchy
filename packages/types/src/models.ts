@@ -17,7 +17,7 @@ export type Room = RoomSettings & {
     hostId: string;
     players: Player[];
     countdown: number;
-    status: GameStatus;
+    status: RoomStatus;
 };
 
 export type RoomSettings = {
@@ -26,7 +26,7 @@ export type RoomSettings = {
     imposterCount: number;
 };
 
-export type GameStatus = "waiting" | "starting" | "playing";
+export type RoomStatus = "waiting" | "starting" | "playing";
 
 export type GamePlayer = Player & {
     color: string;
@@ -52,7 +52,6 @@ export type DrawingState = {
     strokes: Stroke[];
     undoHistory: Stroke[];
     redoHistory: Stroke[];
-    activeStrokes: Map<string, Stroke>;
 };
 
 export type GamePhase = "intro" | "drawing" | "voting";

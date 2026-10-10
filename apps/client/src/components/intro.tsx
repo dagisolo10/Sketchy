@@ -41,12 +41,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
             gsap.set(detailARef.current, { filter: "blur(6px)", y: 8 });
             gsap.set(detailBRef.current, { filter: "blur(14px)", y: 6 });
 
-            const tl = gsap.timeline({
-                defaults: { ease: "power2.out" },
-                onComplete: () => {
-                    onComplete();
-                },
-            });
+            const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
             tl.addLabel("room", 0.15).to("#ig-wall", { opacity: 1, duration: 1, ease: "sine.inOut" }, "room").to(cameraRef.current, { scale: 1.25, duration: 12, ease: "none" }, "room");
 
@@ -59,12 +54,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
             tl.addLabel("blackout", 4.5).to(envRef.current, { opacity: 0, duration: 1.0, ease: "power2.inOut" }, "blackout");
 
             tl.addLabel("yourRole", 5)
-                .fromTo(
-                    yourRoleRef.current,
-                    { letterSpacing: "0.55em", marginRight: "-0.55em" },
-                    { letterSpacing: "0.24em", marginRight: "-0.24em", opacity: 1, filter: "blur(0px)", duration: 2, ease: "power2.out" },
-                    "yourRole",
-                )
+                .fromTo(yourRoleRef.current, { letterSpacing: "0.55em", marginRight: "-0.55em" }, { letterSpacing: "0.24em", marginRight: "-0.24em", opacity: 1, filter: "blur(0px)", duration: 2, ease: "power2.out" }, "yourRole")
                 .to(yourRoleRef.current, { letterSpacing: "0.65em", opacity: 0, filter: "blur(11px)", duration: 1, ease: "power1.in" }, "yourRole+=2.6");
 
             tl.addLabel("reveal", 8.5)
@@ -72,12 +62,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
                 .to(roleRef.current, { opacity: 0.5, duration: 0.06, ease: "none" }, "reveal+=0.3")
                 .to(roleRef.current, { opacity: 0.08, duration: 0.08, ease: "none" }, "reveal+=0.38")
                 .to(roleRef.current, { opacity: 1, duration: 0.1, ease: "none" }, "reveal+=0.5")
-                .fromTo(
-                    roleRef.current,
-                    { letterSpacing: "0.5em", marginRight: "-0.5em" },
-                    { letterSpacing: "0.16em", marginRight: "-0.16em", filter: "blur(0px)", scale: 1, duration: 1.6, ease: "power3.out" },
-                    "reveal+=0.32",
-                )
+                .fromTo(roleRef.current, { letterSpacing: "0.5em", marginRight: "-0.5em" }, { letterSpacing: "0.16em", marginRight: "-0.16em", filter: "blur(0px)", scale: 1, duration: 1.6, ease: "power3.out" }, "reveal+=0.32")
                 .to(cameraRef.current, { scale: 1.078, x: -23, duration: 4.0, ease: "power1.out" }, "yourRole+=0.7");
 
             tl.addLabel("roleSpecific", 10.5)
@@ -88,12 +73,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
             if (isImposter) {
                 tl.to(envRef.current, { opacity: 0.1, duration: 2.8, ease: "power2.inOut" }, "roleSpecific+=0.2")
                     .to("#ig-deep", { opacity: 0.85, duration: 3.2, ease: "power2.inOut" }, "roleSpecific+=0.2")
-                    .fromTo(
-                        detailBRef.current,
-                        { letterSpacing: "0.3em", marginRight: "-0.3em" },
-                        { letterSpacing: "0.16em", marginRight: "-0.16em", opacity: 1, filter: "blur(0px)", y: 0, duration: 1.4, ease: "power2.out" },
-                        "roleSpecific+=0.75",
-                    );
+                    .fromTo(detailBRef.current, { letterSpacing: "0.3em", marginRight: "-0.3em" }, { letterSpacing: "0.16em", marginRight: "-0.16em", opacity: 1, filter: "blur(0px)", y: 0, duration: 1.4, ease: "power2.out" }, "roleSpecific+=0.75");
             } else {
                 tl.to(envRef.current, { opacity: 0.9, duration: 2.8, ease: "power2.inOut" }, "roleSpecific+=0.2").fromTo(
                     detailBRef.current,
@@ -134,11 +114,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
             <div id="ig-vignette" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(0,0,0,0)_30%,rgba(0,0,0,0.42)_64%,rgba(0,0,0,0.9)_100%)]" />
 
             <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-[6vw] text-center">
-                <p
-                    id="ig-narrative"
-                    ref={narrativeRef}
-                    className="m-0 mr-[-0.4em] text-[clamp(48px,2.8vw,16px)] font-light tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_74%,transparent)] uppercase opacity-0"
-                >
+                <p id="ig-narrative" ref={narrativeRef} className="m-0 mr-[-0.4em] text-[clamp(48px,2.8vw,16px)] font-light tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_74%,transparent)] uppercase opacity-0">
                     {NARRATIVE}
                 </p>
             </div>
@@ -170,10 +146,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
 
             <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-[6vw] pt-[17vh] text-center">
                 <div id="ig-detail" className="flex flex-col items-center gap-[clamp(14px,2.4vh,28px)] text-center">
-                    <div
-                        id="ig-detail-rule"
-                        className="h-px w-[clamp(64px,12vw,150px)] bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] opacity-0"
-                    />
+                    <div id="ig-detail-rule" className="h-px w-[clamp(64px,12vw,150px)] bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] opacity-0" />
                     <span
                         id="ig-detail-a"
                         ref={detailARef}

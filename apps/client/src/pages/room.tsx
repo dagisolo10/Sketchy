@@ -62,6 +62,14 @@ function RoomPage({ room }: { room: Room }) {
         { label: "IMPOSTERS", value: imposterCount, valueLabel: "IMPOSTER", min: 1, step: 1, onChange: setImposterCount },
     ];
 
+    const isPlayerInRoom = room.players.some(({ playerId }) => playerId === player?.playerId);
+
+    useEffect(() => {
+        if (!roomId || isPlayerInRoom || !player?.playerId) return;
+
+        joinRoomMt.mutate({ roomId });
+    }, [isPlayerInRoom, joinRoomMt, player?.playerId, roomId]);
+
     useEffect(() => {
         if (!socket) return;
 
@@ -72,21 +80,25 @@ function RoomPage({ room }: { room: Room }) {
                 router(`/room/${roomId}/game`);
             }
         });
-
         socket.on("room:game:intro:started", ({ roomId }) => router(`/room/${roomId}/intro`));
-        socket.on("room:game:starting", ({ room }) => queryClient.setQueryData<Room>(["room", roomId], room));
-        socket.on("room:game:countdown", ({ countdown, roomId }) => queryClient.setQueryData<Room>(["room", roomId], { ...room, countdown }));
+        socket.on("room:game:starting", ({ status }) => {
+            queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, status } : room));
+        });
+        socket.on("room:game:countdown", ({ countdown, roomId }) => {
+            queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, countdown } : room));
+        });
+        socket.on("player:joined", ({ player }) => {
+            queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, players: [...room.players, player] } : room));
+        });
+        socket.on("player:left:room", ({ playerId }) => {
+            queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, players: room.players.filter((p) => p.playerId !== playerId) } : room));
+        });
+        socket.on("player:ready:updated", ({ player }) => {
+            queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, players: room.players.map((p) => (p.playerId === player.playerId ? player : p)) } : room));
+        });
 
-        socket.on("player:joined", ({ room }) => queryClient.setQueryData<Room>(["room", roomId], room));
-        socket.on("player:left:room", ({ room }) => queryClient.setQueryData<Room>(["room", roomId], room));
-        socket.on("player:ready:updated", ({ room }) => queryClient.setQueryData<Room>(["room", roomId], room));
-
-        if (!room.players.some(({ playerId }) => playerId === player?.playerId)) {
-            joinRoomMt.mutate({ roomId });
-        }
-
-        socket.emit("room:joined", { roomId: roomId });
-        socket.emit("room:get:state", { roomId: roomId });
+        socket.emit("room:joined", { roomId });
+        socket.emit("room:get:state", { roomId });
 
         return () => {
             socket.off("room:state");
@@ -99,14 +111,14 @@ function RoomPage({ room }: { room: Room }) {
 
             // add leaving room if path is before room page
         };
-    }, [joinRoomMt, player?.playerId, queryClient, room, roomId, router, socket]);
+    }, [queryClient, roomId, router, socket]);
 
     function updateReadyState() {
         const nextReady = !ready;
 
         setReady(nextReady);
 
-        playerReadyMt.mutate({ roomId: roomId, ready: nextReady });
+        playerReadyMt.mutate({ roomId, ready: nextReady });
     }
 
     async function copyRoomCode() {
@@ -119,7 +131,7 @@ function RoomPage({ room }: { room: Room }) {
     return (
         <GameShell
             trailing={
-                <Button size="lg" variant="outline" disabled={leaveRoomMt.isPending} onClick={() => leaveRoomMt.mutate({ roomId: roomId })} className="hover:text-primary gap-4 px-4 font-bold tracking-widest uppercase">
+                <Button size="lg" variant="outline" disabled={leaveRoomMt.isPending} onClick={() => leaveRoomMt.mutate({ roomId })} className="hover:text-primary gap-4 px-4 font-bold tracking-widest uppercase">
                     <LogOut className="size-4" />
                     LEAVE ROOM
                 </Button>
@@ -181,12 +193,7 @@ function RoomPage({ room }: { room: Room }) {
 
                     <aside className="space-y-6">
                         {isHost && (
-                            <Button
-                                size="lg"
-                                disabled={!canStart || room.status === "starting"}
-                                onClick={() => startGameMt.mutate({ roomId: roomId })}
-                                className="glow-primary h-14 w-full gap-2 rounded-none px-8 text-base font-bold tracking-wider uppercase"
-                            >
+                            <Button size="lg" disabled={!canStart || room.status === "starting"} onClick={() => startGameMt.mutate({ roomId })} className="glow-primary h-14 w-full gap-2 rounded-none px-8 text-base font-bold tracking-wider uppercase">
                                 <Play className="fill-background text-background size-4" />
                                 START GAME
                             </Button>
@@ -201,12 +208,12 @@ function RoomPage({ room }: { room: Room }) {
                                         <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">{label}</span>
 
                                         <div className="flex items-center gap-3">
+                                            {onChange && isHost && <NumberInput disabled={!isHost} min={min} step={step} value={value} onChange={onChange} />}
+
                                             <span className="text-primary text-base font-black tracking-wider uppercase">
                                                 {value}
                                                 <span className="ml-1 text-xs text-slate-400">{valueLabel}</span>
                                             </span>
-
-                                            {onChange && <NumberInput min={min} step={step} value={value} onChange={onChange} />}
                                         </div>
                                     </li>
                                 ))}

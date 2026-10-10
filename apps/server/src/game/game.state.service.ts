@@ -10,6 +10,7 @@ export class GameStateService {
 
     private gamesMap = new Map<string, Game>();
     private drawingStateMap = new Map<string, DrawingState>();
+    private activeStrokesMap = new Map<string, Map<string, Stroke>>();
 
     private roomRoundTimerMap = new Map<string, NodeJS.Timeout | null>();
     private roomCountdownTimerMap = new Map<string, NodeJS.Timeout | null>();
@@ -39,7 +40,6 @@ export class GameStateService {
             strokes: [],
             undoHistory: [],
             redoHistory: [],
-            activeStrokes: new Map(),
         });
     }
 
@@ -90,23 +90,22 @@ export class GameStateService {
             roomId,
             setTimeout(() => {
                 this.next(roomId);
-                this.socketIoService.emitTo("game:next_turn", roomId, { activePlayer: game.activePlayer, drawingState });
             }, DRAWING_DURATION * 1000),
         );
     }
 
-    next(roomId: string, manual = false) {
+    next(roomId: string, playerId?: string) {
         const game = this.getGame(roomId);
         const drawingState = this.drawingStateMap.get(roomId);
 
-        if (!game || !game.playing || !drawingState) return;
+        if (!game || !game.playing || !drawingState || (playerId && game.activePlayer.playerId !== playerId)) return;
 
         const nextIndex = (game.currentIndex + 1) % game.players.length;
 
         game.currentIndex = nextIndex;
         game.activePlayer = game.players[nextIndex];
 
-        drawingState.activeStrokes.clear();
+        this.activeStrokesMap.get(roomId)?.clear();
         drawingState.strokes.forEach((stroke) => (stroke.active = false));
         drawingState.turn += 1;
 
@@ -118,9 +117,7 @@ export class GameStateService {
             this.socketIoService.emitTo("game:round_count", roomId, { round: game.round, drawingState });
         }
 
-        if (manual) {
-            this.socketIoService.emitTo("game:next_turn", roomId, { activePlayer: game.activePlayer, drawingState });
-        }
+        this.socketIoService.emitTo("game:next_turn", roomId, { activePlayer: game.activePlayer, drawingState });
 
         this.clearTimers(roomId);
         this.startTimer(roomId);
@@ -147,9 +144,15 @@ export class GameStateService {
         };
 
         drawingState.strokes.push(stroke);
-        drawingState.activeStrokes.set(playerId, stroke);
 
-        this.socketIoService.emit("drawing:start", { penSize, point, tool, color: player.color, turn: stroke.turn });
+        let activeStrokes = this.activeStrokesMap.get(roomId);
+        if (!activeStrokes) {
+            activeStrokes = new Map();
+            this.activeStrokesMap.set(roomId, activeStrokes);
+        }
+        activeStrokes.set(playerId, stroke);
+
+        this.socketIoService.emitTo("drawing:start", roomId, { penSize, point, tool, color: player.color, turn: stroke.turn });
     }
 
     addStrokePoint(roomId: string, playerId: string, point: Point) {
@@ -162,13 +165,13 @@ export class GameStateService {
 
         if (!player) return;
 
-        const stroke = drawingState.activeStrokes.get(playerId);
+        const stroke = this.activeStrokesMap.get(roomId)?.get(playerId);
 
         if (!stroke) return;
 
         stroke.points.push(point);
 
-        this.socketIoService.emit("drawing:move", { point, color: player.color });
+        this.socketIoService.emitTo("drawing:move", roomId, { point, color: player.color });
     }
 
     endStroke(roomId: string, playerId: string) {
@@ -177,24 +180,25 @@ export class GameStateService {
 
         if (!drawingState || !game || game.activePlayer.playerId !== playerId) return;
 
-        const stroke = drawingState.activeStrokes.get(playerId);
+        const stroke = this.activeStrokesMap.get(roomId)?.get(playerId);
 
         if (!stroke) return;
 
         stroke.active = false;
 
-        drawingState.activeStrokes.delete(playerId);
+        this.activeStrokesMap.get(roomId)?.delete(playerId);
 
         drawingState.undoHistory.push(stroke);
         drawingState.redoHistory = [];
 
-        this.socketIoService.emit("drawing:end", { drawingState });
+        this.socketIoService.emitTo("drawing:end", roomId, { drawingState });
     }
 
-    undo(roomId: string) {
+    undo(roomId: string, playerId: string) {
+        const game = this.getGame(roomId);
         const drawingState = this.drawingStateMap.get(roomId);
 
-        if (!drawingState || drawingState.undoHistory.length === 0) return;
+        if (!drawingState || drawingState.undoHistory.length === 0 || (playerId && game && game.activePlayer.playerId !== playerId)) return;
 
         if (drawingState.strokes.at(-1)?.active) return;
 
@@ -203,13 +207,14 @@ export class GameStateService {
         drawingState.strokes.pop();
         drawingState.redoHistory.push(stroke);
 
-        this.socketIoService.emit("drawing:undo", { drawingState });
+        this.socketIoService.emitTo("drawing:undo", roomId, { drawingState });
     }
 
-    redo(roomId: string) {
+    redo(roomId: string, playerId: string) {
+        const game = this.getGame(roomId);
         const drawingState = this.drawingStateMap.get(roomId);
 
-        if (!drawingState || drawingState.redoHistory.length === 0) return;
+        if (!drawingState || drawingState.redoHistory.length === 0 || (playerId && game && game.activePlayer.playerId !== playerId)) return;
 
         if (drawingState.strokes.at(-1)?.active) return;
 
@@ -218,7 +223,7 @@ export class GameStateService {
         drawingState.strokes.push(stroke);
         drawingState.undoHistory.push(stroke);
 
-        this.socketIoService.emit("drawing:redo", { drawingState });
+        this.socketIoService.emitTo("drawing:redo", roomId, { drawingState });
     }
 
     getDrawingStrokes(roomId: string) {

@@ -10,7 +10,7 @@ export default function GameIntroPage() {
     const { socket } = useSocket();
 
     const hasEmittedRef = useRef(false);
-    const [role, setRole] = useState<Role>("imposter");
+    const [role, setRole] = useState<Role | null>(null);
     const [secretWord, setSecretWord] = useState<string | null>(null);
 
     useEffect(() => {
@@ -36,6 +36,10 @@ export default function GameIntroPage() {
 
         navigate(`/room/${roomId}/game`, { replace: true });
     };
+
+    if (!role) {
+        return null;
+    }
 
     return <IntroPage role={role} secretWord={secretWord} onComplete={handleIntroComplete} />;
 }

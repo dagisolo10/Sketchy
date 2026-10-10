@@ -15,6 +15,7 @@ export const PEN_SIZES: Record<PenSize, number> = {
 
 export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps) {
     const layerRef = useRef<HTMLCanvasElement | null>(null);
+    const strokesRef = useRef<{ strokes: Stroke[]; activeStroke: Stroke | null }>({ strokes: [], activeStroke: null });
 
     const getContext = useCallback((): CanvasRenderingContext2D | null | null => {
         const canvas = canvasRef.current;
@@ -49,43 +50,10 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
         [canvasRef],
     );
 
-    const resizeCanvas = useCallback(() => {
-        const container = containerRef.current;
-        const canvasCtx = getCanvasContext();
-
-        if (!container || !canvasCtx) return;
-
-        const rect = container.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-
-        const width = Math.floor(rect.width * dpr);
-        const height = Math.floor(rect.height * dpr);
-
-        const currentState = canvasCtx.ctx.getImageData(0, 0, canvasCtx.canvas.width, canvasCtx.canvas.height);
-
-        canvasCtx.canvas.width = width;
-        canvasCtx.canvas.height = height;
-        canvasCtx.canvas.style.width = `${rect.width}px`;
-        canvasCtx.canvas.style.height = `${rect.height}px`;
-
-        canvasCtx.ctx.scale(dpr, dpr);
-        canvasCtx.ctx.lineCap = "round";
-        canvasCtx.ctx.lineJoin = "round";
-        canvasCtx.ctx.imageSmoothingEnabled = true;
-
-        if (currentState.width > 0 && currentState.height > 0) {
-            try {
-                canvasCtx.ctx.putImageData(currentState, 0, 0);
-            } catch {
-                canvasCtx.ctx.clearRect(0, 0, rect.width, rect.height);
-            }
-        } else {
-            canvasCtx.ctx.clearRect(0, 0, rect.width, rect.height);
-        }
-    }, [containerRef, getCanvasContext]);
-
     const drawStrokes = useCallback(
         (strokes: Stroke[], activeStroke: Stroke | null = null) => {
+            strokesRef.current = { strokes, activeStroke };
+
             const canvasCxt = getCanvasContext();
 
             if (!canvasCxt) return;
@@ -161,6 +129,36 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
         },
         [getCanvasContext],
     );
+
+    const resizeCanvas = useCallback(() => {
+        const container = containerRef.current;
+        const canvasCxt = getCanvasContext();
+
+        if (!container || !canvasCxt) return;
+
+        const rect = container.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+
+        const width = Math.floor(rect.width * dpr);
+        const height = Math.floor(rect.height * dpr);
+
+        if (width === 0 || height === 0) return;
+
+        const { canvas, ctx } = canvasCxt;
+
+        canvas.width = width;
+        canvas.height = height;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+
+        ctx.scale(dpr, dpr);
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.imageSmoothingEnabled = true;
+
+        const { strokes, activeStroke } = strokesRef.current;
+        drawStrokes(strokes, activeStroke);
+    }, [containerRef, drawStrokes, getCanvasContext]);
 
     useEffect(() => {
         resizeCanvas();

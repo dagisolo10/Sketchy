@@ -37,6 +37,7 @@ export default function DrawingBoard({ roomId, myTurn, drawingState, setDrawingS
             if (!point || !socket || !myTurn) return;
 
             pressedRef.current = true;
+            canvasRef.current?.setPointerCapture(e.pointerId);
 
             socket.emit("drawing:start", { point, roomId, penSize, tool });
         },
@@ -59,8 +60,9 @@ export default function DrawingBoard({ roomId, myTurn, drawingState, setDrawingS
 
     const emitStop = useCallback(
         (e: PointerEvent) => {
-            if (!socket || !myTurn) return;
+            if (!socket || !myTurn || !pressedRef.current) return;
 
+            pressedRef.current = false;
             canvasRef.current?.releasePointerCapture(e.pointerId);
 
             socket.emit("drawing:end", { roomId });
@@ -92,12 +94,8 @@ export default function DrawingBoard({ roomId, myTurn, drawingState, setDrawingS
             setActiveStroke(null);
             setDrawingState(drawingState);
         });
-        socket.on("drawing:undo", ({ drawingState }) => {
-            setDrawingState(drawingState);
-        });
-        socket.on("drawing:redo", ({ drawingState }) => {
-            setDrawingState(drawingState);
-        });
+        socket.on("drawing:undo", ({ drawingState }) => setDrawingState(drawingState));
+        socket.on("drawing:redo", ({ drawingState }) => setDrawingState(drawingState));
 
         canvas.addEventListener("pointerup", emitStop);
         canvas.addEventListener("pointerout", emitStop);
@@ -118,7 +116,7 @@ export default function DrawingBoard({ roomId, myTurn, drawingState, setDrawingS
             socket.off("drawing:move");
             socket.off("drawing:start");
         };
-    }, [drawing, emitMove, emitStart, emitStop, penSize, setDrawingState, socket, tool]);
+    }, [drawing, emitMove, emitStart, emitStop, setDrawingState, socket]);
 
     return (
         <div className="flex size-full flex-col">

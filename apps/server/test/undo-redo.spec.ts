@@ -28,7 +28,7 @@ describe("GameStateService undo/redo", () => {
         emits = [];
         const stubIo = {
             emit: (event: string, payload: unknown) => emits.push({ event, payload }),
-            emitTo: () => undefined,
+            emitTo: (event: string, payload: unknown) => emits.push({ event, payload }),
         } as never;
         service = new GameStateService(stubIo);
         service.prepareGame(makeRoom(["a", "b"]));

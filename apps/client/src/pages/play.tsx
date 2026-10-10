@@ -150,7 +150,12 @@ export default function PlayPage() {
                                 spellCheck={false}
                                 placeholder="* * * * *"
                                 onChange={(e) => setRoomId(e.target.value)}
-                                onDoubleClick={async () => setRoomId(await window.navigator.clipboard.readText())}
+                                onDoubleClick={() =>
+                                    window.navigator.clipboard
+                                        .readText()
+                                        .catch((err) => console.error("Failed to paste to clipboard", err))
+                                        .then((value) => value && setRoomId(value))
+                                }
                                 className="bg-background/60 focus-visible:border-primary h-14 rounded-none border-slate-800 px-4 text-center text-xl font-black tracking-[0.4em] text-white uppercase placeholder:tracking-[0.4em] placeholder:text-slate-700 focus-visible:ring-0"
                             />
 

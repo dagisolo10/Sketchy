@@ -27,7 +27,7 @@ export class SocketIoService {
         this.playerSockets.set(playerId, socket);
     }
 
-    removePlayerSocket(playerId: string) {
-        this.playerSockets.delete(playerId);
+    removePlayerSocket(playerId: string, socket: TypedSocket) {
+        if (this.playerSockets.get(playerId) === socket) this.playerSockets.delete(playerId);
     }
 }

@@ -59,12 +59,14 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
         console.log("✅ Socket connected", player.name);
     }
 
-    handleDisconnect({ data: { player, sessionId } }: TypedSocket) {
-        if (this.authService.getPlayerBySession(sessionId)) {
-            this.authService.startDisconnectGracePeriod(player.playerId, sessionId);
+    handleDisconnect(client: TypedSocket) {
+        if (!client.data.player && !client.data.sessionId) return;
+
+        if (this.authService.getPlayerBySession(client.data.sessionId)) {
+            this.authService.startDisconnectGracePeriod(client.data.player.playerId, client.data.sessionId);
         }
 
-        this.socketService.removePlayerSocket(player.playerId);
+        this.socketService.removePlayerSocket(client.data.player.playerId, client);
 
         console.log("❌ Socket disconnected");
     }

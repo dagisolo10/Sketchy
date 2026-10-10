@@ -100,7 +100,7 @@ function GameCanvasPage({ room }: { room: Room }) {
 
                             <div className="flex items-center gap-4">
                                 <Countdown label="ROUND" value={game?.round.toString() ?? "1"} variant="danger" />
-                                <Countdown label="TIME LEFT" value={`00:${game?.remaining.toString().padStart(2, "0")}`} variant="warning" />
+                                <Countdown label="TIME LEFT" value={game ? `00:${game.remaining.toString().padStart(2, "0")}` : "00:--"} variant="warning" />
                             </div>
                         </div>
 

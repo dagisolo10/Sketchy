@@ -21,4 +21,8 @@ export class RoomStore {
     removeRoom(roomId: string): void {
         this.rooms = this.rooms.filter((room) => room.roomId !== roomId);
     }
+
+    isPlayerInRoom(roomId: string, playerId: string): boolean {
+        return this.rooms.some((room) => room.roomId === roomId && room.players.some((player) => player.playerId === playerId));
+    }
 }
