@@ -83,7 +83,7 @@ function RoomPage({ room }: { room: Room }) {
         });
         socket.on("room:settings:updated", ({ settings }) => {
             setSettings(settings);
-            queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, ...settings } : room));
+            queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, settings } : room));
         });
         socket.on("room:game:countdown", ({ countdown, roomId }) => {
             queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, countdown } : room));
