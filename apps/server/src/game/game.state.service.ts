@@ -1,8 +1,9 @@
-import { WORDS } from "@/game/game.data.js";
-import { SocketIoService } from "@/socket.io/socket.io.service.js";
-import { Injectable } from "@nestjs/common";
 import { DRAWING_DURATION, DrawingState, Game, GamePlayer, PenSize, Point, Room, Stroke, Tool } from "@package/types";
+import { SocketIoService } from "@/socket.io/socket.io.service.js";
+import { WORDS } from "@/game/game.data.js";
+import { Injectable } from "@nestjs/common";
 import random from "random";
+
 
 @Injectable()
 export class GameStateService {
@@ -30,8 +31,8 @@ export class GameStateService {
             playing: false,
             currentIndex: 0,
             activePlayer: players[0],
-            remaining: room.drawingTime,
             secretWord: random.choice(WORDS)!,
+            remaining: room.settings.drawingTime,
             imposterId: random.choice(players)!.playerId,
         });
 

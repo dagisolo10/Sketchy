@@ -1,6 +1,7 @@
 import { IsInt, Max, Min } from "class-validator";
 
-export class CreateRoomDto {
+
+export class UpdateRoomSettingsDto {
     @IsInt()
     @Min(3)
     @Max(10)
@@ -14,5 +15,5 @@ export class CreateRoomDto {
     @IsInt()
     @Min(1)
     @Max(3)
-    imposterCount: number;
+    imposters: number;
 }

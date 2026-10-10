@@ -12,18 +12,19 @@ export type Player = {
     playerId: string;
 };
 
-export type Room = RoomSettings & {
+export type Room = {
     roomId: string;
     hostId: string;
     players: Player[];
     countdown: number;
     status: RoomStatus;
+    settings: RoomSettings;
 };
 
 export type RoomSettings = {
+    imposters: number;
     maxPlayers: number;
     drawingTime: number;
-    imposterCount: number;
 };
 
 export type RoomStatus = "waiting" | "starting" | "playing";

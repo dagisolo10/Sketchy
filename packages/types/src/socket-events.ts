@@ -1,4 +1,5 @@
-import { DrawingState, Game, GamePlayer, PenSize, Player, Point, Role, Room, RoomStatus, Tool } from "./models.js";
+import { DrawingState, Game, GamePlayer, PenSize, Player, Point, Role, Room, RoomSettings, RoomStatus, Tool } from "./models.js";
+
 
 export interface ServerToClientEvents {
     connection_error: (error: string) => void;
@@ -10,6 +11,7 @@ export interface ServerToClientEvents {
     "room:state": (data: { room: Room }) => void;
     "room:game:starting": (data: { status: RoomStatus }) => void;
     "room:game:intro:started": (data: { roomId: string }) => void;
+    "room:settings:updated": (data: { settings: RoomSettings }) => void;
     "room:game:countdown": (data: { roomId: string; countdown: number }) => void;
 
     "game:timer": (data: { remaining: number }) => void;

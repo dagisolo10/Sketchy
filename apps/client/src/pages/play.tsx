@@ -1,14 +1,14 @@
+import { useGetOrCreateSession, useUpdatePlayerName } from "@/hooks/tan-stack/session";
+import { useCreateRoom, useJoinRoom } from "@/hooks/tan-stack/room";
+import { SignalIndicator } from "@/components/ui/signal-indicator";
+import { KeyRound, Plus, User2, UserCheck2 } from "lucide-react";
+import { useToast } from "@/contexts/toast-context";
 import GameShell from "@/components/game-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
-import { SignalIndicator } from "@/components/ui/signal-indicator";
-import { useToast } from "@/contexts/toast-context";
-import { useCreateRoom, useJoinRoom } from "@/hooks/tan-stack/room";
-import { useGetOrCreateSession, useUpdatePlayerName } from "@/hooks/tan-stack/session";
-import { KeyRound, Plus, User2, UserCheck2 } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router";
+import { useState } from "react";
+
 
 export default function PlayPage() {
     const toast = useToast();
@@ -17,20 +17,11 @@ export default function PlayPage() {
 
     const [roomId, setRoomId] = useState("");
     const [isSaved, setIsSaved] = useState(false);
-    const [playerLimit, setPlayerLimit] = useState(6);
-    const [drawingTime, setDrawingTime] = useState(30);
-    const [imposterCount, setImposterCount] = useState(1);
     const [playerName, setPlayerName] = useState(player?.name ?? "User");
 
     const updateNameMt = useUpdatePlayerName();
     const joinRoomMt = useJoinRoom({ onSuccess: ({ roomId }) => router("/room/" + roomId), onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to join room" }) });
     const createRoomMt = useCreateRoom({ onSuccess: ({ roomId }) => router("/room/" + roomId), onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to create room" }) });
-
-    const roomSettings = [
-        { label: "PLAYER LIMIT", value: playerLimit, valueLabel: "PLAYERS", min: 1, step: 1, onChange: setPlayerLimit },
-        { label: "IMPOSTER COUNT", value: imposterCount, valueLabel: "IMPOSTER", min: 1, step: 1, onChange: setImposterCount },
-        { label: "DRAWING TIME", value: drawingTime, valueLabel: "SECONDS", min: 10, step: 5, onChange: setDrawingTime },
-    ];
 
     function saveName(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -100,31 +91,27 @@ export default function PlayPage() {
                         </div>
 
                         <h2 className="mb-2 text-2xl font-black tracking-tight uppercase transition-colors sm:text-3xl">CREATE A GAME</h2>
-                        <p className="mb-8 text-lg text-slate-400">Start a room and invite your friends.</p>
+                        <p className="mb-6 text-lg text-slate-400">Start a private room and invite your friends instantly.</p>
 
-                        <div className="mb-8 space-y-3">
-                            <div className="text-sm font-bold tracking-widest text-slate-500 uppercase">DEFAULT SETTINGS</div>
-
-                            {roomSettings.map(({ label, valueLabel, value, min, onChange, step }) => (
-                                <div key={label} className="bg-background/40 flex items-center justify-between border border-slate-800 px-4 py-3">
-                                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">{label}</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-bold tracking-wider text-white uppercase">
-                                            {value} {valueLabel}
-                                        </span>
-                                        <NumberInput min={min} onChange={onChange} value={value} step={step} />
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="my-auto space-y-2.5 py-4 text-xs font-bold tracking-widest text-slate-500 uppercase">
+                            <div className="flex items-center gap-2">
+                                <span className="text-primary">✦</span> Instant WebSocket Synchronization
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-primary">✦</span> Real-Time Drawing Canvas
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-primary">✦</span> Secret Imposter Roles
+                            </div>
                         </div>
 
                         <button
                             disabled={createRoomMt.isPending}
-                            onClick={() => createRoomMt.mutate({ maxPlayers: playerLimit, drawingTime, imposterCount })}
-                            className="glow-primary bg-primary group text-background hover:text-foreground hover:border-primary flex h-14 w-fit cursor-pointer items-center gap-3 border border-transparent px-8 text-base font-bold tracking-wider uppercase transition-[scale,color,background-color,border-color] duration-[300ms,500ms,500ms,500ms] hover:bg-transparent active:scale-98"
+                            onClick={() => createRoomMt.mutate()}
+                            className="glow-primary bg-primary group text-background hover:text-foreground hover:border-primary mt-auto flex h-14 w-full cursor-pointer items-center gap-3 border border-transparent px-8 text-base font-bold tracking-wider uppercase transition-[scale,color,background-color,border-color] duration-[300ms,500ms,500ms,500ms] hover:bg-transparent active:scale-98 sm:w-fit"
                         >
                             <Plus className="fill-background group-hover:fill-foreground size-5 transition-colors duration-500" />
-                            <span>{createRoomMt.isPending ? "CREATING" : "CREATE"} ROOM</span>
+                            <span>{createRoomMt.isPending ? "CREATING..." : "CREATE ROOM"}</span>
                         </button>
                     </div>
 

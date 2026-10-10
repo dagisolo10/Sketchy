@@ -1,12 +1,13 @@
-import { GameStateService } from "@/game/game.state.service.js";
-import { CreateRoomDto } from "@/room/room.dto.js";
-import { RoomStore } from "@/room/room.store.js";
-import { SessionContext } from "@/session/session.context.js";
-import { SessionService } from "@/session/session.service.js";
-import { SocketIoService } from "@/socket.io/socket.io.service.js";
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
-import { COUNTER_START_TIME, MIN_PLAYERS } from "@package/types";
+import { COUNTER_START_TIME, MIN_PLAYERS, RoomSettings } from "@package/types";
+import { SocketIoService } from "@/socket.io/socket.io.service.js";
+import { GameStateService } from "@/game/game.state.service.js";
+import { SessionService } from "@/session/session.service.js";
+import { SessionContext } from "@/session/session.context.js";
+import { UpdateRoomSettingsDto } from "@/room/room.dto.js";
+import { RoomStore } from "@/room/room.store.js";
 import { ulid } from "ulid";
+
 
 @Injectable()
 export class RoomService {
@@ -19,6 +20,11 @@ export class RoomService {
     ) {}
 
     private countdownIntervals = new Map<string, NodeJS.Timeout>();
+    private readonly DEFAULT_ROOM_SETTINGS: RoomSettings = {
+        imposters: 1,
+        maxPlayers: 6,
+        drawingTime: 30,
+    };
 
     getRooms() {
         return this.roomStore.getRooms();
@@ -30,7 +36,7 @@ export class RoomService {
         return room;
     }
 
-    createRoom({ maxPlayers, drawingTime, imposterCount }: CreateRoomDto) {
+    createRoom() {
         const sessionId = this.sessionContext.getSessionId();
 
         const player = this.sessionService.getPlayerBySession(sessionId);
@@ -45,15 +51,27 @@ export class RoomService {
         while (this.roomStore.getRoom(roomId));
 
         const room = this.roomStore.addRoom({
-            maxPlayers,
-            drawingTime,
-            imposterCount,
             status: "waiting",
             hostId: player.playerId,
             countdown: COUNTER_START_TIME,
+            settings: this.DEFAULT_ROOM_SETTINGS,
             players: [{ ...player, ready: false }],
             roomId: roomId.slice(-5).toUpperCase(),
         });
+
+        return room;
+    }
+
+    updateRoomSettings(roomId: string, settings: UpdateRoomSettingsDto) {
+        const { player, room } = this.validateRoom(roomId);
+
+        if (room.hostId !== player.playerId) {
+            throw new ForbiddenException("You are not allowed to edit room settings");
+        }
+
+        room.settings = settings;
+
+        this.socketIoService.emitTo("room:settings:updated", roomId, { settings });
 
         return room;
     }
@@ -65,7 +83,7 @@ export class RoomService {
             return room;
         }
 
-        if (room.players.length >= room.maxPlayers) {
+        if (room.players.length >= room.settings.maxPlayers) {
             throw new ForbiddenException("Room is full");
         }
 

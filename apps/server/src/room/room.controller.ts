@@ -1,6 +1,7 @@
-import { CreateRoomDto } from "@/room/room.dto.js";
-import { RoomService } from "@/room/room.service.js";
 import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { UpdateRoomSettingsDto } from "@/room/room.dto.js";
+import { RoomService } from "@/room/room.service.js";
+
 
 @Controller("room")
 export class RoomController {
@@ -17,8 +18,13 @@ export class RoomController {
     }
 
     @Post()
-    createRoom(@Body() data: CreateRoomDto) {
-        return this.roomService.createRoom(data);
+    createRoom() {
+        return this.roomService.createRoom();
+    }
+
+    @Patch(":roomId/settings")
+    updateRoomSettings(@Param("roomId") roomId: string, @Body() data: UpdateRoomSettingsDto) {
+        return this.roomService.updateRoomSettings(roomId, data);
     }
 
     @Post("join/:roomId")

@@ -1,19 +1,20 @@
-import GameShell from "@/components/game-shell";
-import PlayerCard from "@/components/player-card";
-import { Button } from "@/components/ui/button";
-import { Countdown } from "@/components/ui/countdown";
-import { NumberInput } from "@/components/ui/number-input";
-import { useSocket } from "@/contexts/socket-context";
-import { useToast } from "@/contexts/toast-context";
-import { useGetRoom, useJoinRoom, useLeaveRoom, usePlayerReady, useStartGame } from "@/hooks/tan-stack/room";
+import { useGetRoom, useJoinRoom, useLeaveRoom, usePlayerReady, useStartGame, useUpdateRoomSettings } from "@/hooks/tan-stack/room";
+import { MIN_PLAYERS, type Room, type RoomSettings } from "@package/types";
 import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
-import NotFound from "@/pages/not-found";
-import { MIN_PLAYERS, type Room } from "@package/types";
+import { Check, Copy, LogOut, Play, Save } from "lucide-react";
+import { NumberInput } from "@/components/ui/number-input";
 import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "cn";
-import { Check, Copy, LogOut, Play } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSocket } from "@/contexts/socket-context";
 import { useNavigate, useParams } from "react-router";
+import { Countdown } from "@/components/ui/countdown";
+import { useToast } from "@/contexts/toast-context";
+import PlayerCard from "@/components/player-card";
+import GameShell from "@/components/game-shell";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import NotFound from "@/pages/not-found";
+import { cn } from "cn";
+
 
 export default function RoomPageLayout() {
     const { roomId = "" } = useParams<{ roomId: string }>();
@@ -36,6 +37,7 @@ function RoomPage({ room }: { room: Room }) {
     const queryClient = useQueryClient();
 
     const { data: player } = useGetOrCreateSession();
+    const updateRoomSettingsMt = useUpdateRoomSettings({ onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to update room settings" }) });
     const joinRoomMt = useJoinRoom({ onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to join room" }) });
     const startGameMt = useStartGame({ onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to start game" }) });
     const playerReadyMt = usePlayerReady({ onError: (err) => toast.addToast({ variant: "error", description: err.message, title: "Failed to change ready" }) });
@@ -43,26 +45,21 @@ function RoomPage({ room }: { room: Room }) {
 
     const [ready, setReady] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
+    const [settings, setSettings] = useState<RoomSettings>(room.settings);
 
-    const [playerLimit, setPlayerLimit] = useState(6);
-    const [drawingTime, setDrawingTime] = useState(30);
-    const [imposterCount, setImposterCount] = useState(1);
-
-    const readyCount = room.players.filter(({ ready }) => ready).length;
-
-    const playerCount = room.players.length >= MIN_PLAYERS ? room.players.length : 3;
-    const canStart = room.players.length >= MIN_PLAYERS && room.players.every(({ ready }) => ready);
-
-    const isHost = player?.playerId === room.hostId;
+    const hasChanges = settings.maxPlayers !== room.settings.maxPlayers || settings.drawingTime !== room.settings.drawingTime || settings.imposters !== room.settings.imposters;
 
     const rules = [
-        { label: "MIN PLAYERS", value: 3, valueLabel: "PLAYERS" },
-        { label: "MAX PLAYERS", value: playerLimit, valueLabel: "PLAYERS", min: 1, step: 1, onChange: setPlayerLimit },
-        { label: "DRAWING TIME", value: drawingTime, valueLabel: "S", min: 10, step: 5, onChange: setDrawingTime },
-        { label: "IMPOSTERS", value: imposterCount, valueLabel: "IMPOSTER", min: 1, step: 1, onChange: setImposterCount },
+        { label: "Max Players", value: settings.maxPlayers, valueLabel: "Players", min: 2, step: 1, onChange: (val: number) => setSettings((s) => ({ ...s, maxPlayers: val })) },
+        { label: "Drawing Time", value: settings.drawingTime, valueLabel: "Secs", min: 30, step: 10, onChange: (val: number) => setSettings((s) => ({ ...s, drawingTime: val })) },
+        { label: "Imposter Count", value: settings.imposters, valueLabel: "Imposters", min: 1, step: 1, onChange: (val: number) => setSettings((s) => ({ ...s, imposters: val })) },
     ];
 
+    const isHost = player?.playerId === room.hostId;
+    const readyCount = room.players.filter(({ ready }) => ready).length;
+    const playerCount = room.players.length >= MIN_PLAYERS ? room.players.length : 3;
     const isPlayerInRoom = room.players.some(({ playerId }) => playerId === player?.playerId);
+    const canStart = room.players.length >= MIN_PLAYERS && room.players.every(({ ready }) => ready);
 
     useEffect(() => {
         if (!roomId || isPlayerInRoom || !player?.playerId) return;
@@ -83,6 +80,10 @@ function RoomPage({ room }: { room: Room }) {
         socket.on("room:game:intro:started", ({ roomId }) => router(`/room/${roomId}/intro`));
         socket.on("room:game:starting", ({ status }) => {
             queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, status } : room));
+        });
+        socket.on("room:settings:updated", ({ settings }) => {
+            setSettings(settings);
+            queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, ...settings } : room));
         });
         socket.on("room:game:countdown", ({ countdown, roomId }) => {
             queryClient.setQueryData<Room>(["room", roomId], (room) => (room ? { ...room, countdown } : room));
@@ -107,6 +108,7 @@ function RoomPage({ room }: { room: Room }) {
             socket.off("room:game:starting");
             socket.off("room:game:countdown");
             socket.off("player:ready:updated");
+            socket.off("room:settings:updated");
             socket.off("room:game:intro:started");
 
             // add leaving room if path is before room page
@@ -126,6 +128,12 @@ function RoomPage({ room }: { room: Room }) {
 
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
+    }
+
+    function handleSave() {
+        if (!hasChanges || !isHost) return;
+
+        updateRoomSettingsMt.mutate({ roomId, ...settings });
     }
 
     return (
@@ -208,7 +216,7 @@ function RoomPage({ room }: { room: Room }) {
                                         <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">{label}</span>
 
                                         <div className="flex items-center gap-3">
-                                            {onChange && isHost && <NumberInput disabled={!isHost} min={min} step={step} value={value} onChange={onChange} />}
+                                            {isHost && <NumberInput disabled={!isHost || updateRoomSettingsMt.isPending} min={min} step={step} value={value} onChange={onChange} />}
 
                                             <span className="text-primary text-base font-black tracking-wider uppercase">
                                                 {value}
@@ -218,6 +226,13 @@ function RoomPage({ room }: { room: Room }) {
                                     </li>
                                 ))}
                             </ul>
+
+                            {isHost && (
+                                <Button size="lg" disabled={!hasChanges || updateRoomSettingsMt.isPending} onClick={handleSave} className="glow-primary h-14 w-full gap-2 rounded-none px-8 text-base font-bold tracking-wider uppercase">
+                                    <Save className="size-4" />
+                                    {updateRoomSettingsMt.isPending ? "SAVING..." : "UPDATE SETTINGS"}
+                                </Button>
+                            )}
                         </div>
 
                         {room.status === "starting" && <Countdown variant="warning" label="GAME STARTS IN" value={`00:${room.countdown.toString().padStart(2, "0")}`} className="bg-card flex-1 justify-between border border-slate-800 p-4" />}

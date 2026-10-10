@@ -1,7 +1,8 @@
-import { api, requestApi } from "@/lib/axios";
-import type { TMutationOptions, TQueryOptions } from "@/types/options";
 import type { Player, PlayerReadyPayload, Room, RoomSettings } from "@package/types";
+import type { TMutationOptions, TQueryOptions } from "@/types/options";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { api, requestApi } from "@/lib/axios";
+
 
 export function useGetRoom<Data = Room>(roomId: string, options?: TQueryOptions<Data>) {
     return useQuery({
@@ -11,11 +12,20 @@ export function useGetRoom<Data = Room>(roomId: string, options?: TQueryOptions<
     });
 }
 
-export function useCreateRoom<Data = Room>(options?: TMutationOptions<Data, RoomSettings>) {
+export function useCreateRoom<Data = Room>(options?: TMutationOptions<Data>) {
     return useMutation({
         ...options,
         onError: (...args) => options?.onError && options.onError(...args),
-        mutationFn: async (data) => requestApi(() => api.post<Data>("/room", data)),
+        mutationFn: async () => requestApi(() => api.post<Data>("/room")),
+        onSuccess: (...args) => options?.onSuccess && options.onSuccess(...args),
+    });
+}
+
+export function useUpdateRoomSettings<Data = Room>(options?: TMutationOptions<Data, RoomSettings & { roomId: string }>) {
+    return useMutation({
+        ...options,
+        onError: (...args) => options?.onError && options.onError(...args),
+        mutationFn: async ({ roomId, ...settings }) => requestApi(() => api.patch<Data>(`/room/${roomId}/settings`, settings)),
         onSuccess: (...args) => options?.onSuccess && options.onSuccess(...args),
     });
 }
