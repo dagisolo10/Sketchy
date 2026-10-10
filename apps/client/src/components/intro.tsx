@@ -1,17 +1,20 @@
-import { useGSAP } from "@gsap/react";
 import type { Role } from "@package/types";
-import { cn } from "cn";
-import { gsap } from "gsap";
 import { useEffect, useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "gsap";
+import { cn } from "cn";
+
 
 gsap.registerPlugin(useGSAP);
 
-export default function IntroPage({ onComplete, secretWord, role }: { onComplete: () => void; secretWord: string | null; role: Role }) {
+export default function IntroPage({ onComplete, secretWord, fellowImposters, role }: { onComplete: () => void; secretWord: string | null; fellowImposters: string[]; role: Role }) {
     const isImposter = role === "imposter";
 
     const NARRATIVE = "LET THE GAMES BEGIN.";
-    const DETAIL_A = isImposter ? "You don't know the word." : "Your word";
-    const DETAIL_B = isImposter ? "Find it before they find you." : secretWord;
+    const DETAIL_A = isImposter ? null : "Your word";
+    const DETAIL_B = isImposter ? "Find the word before they find you." : secretWord;
+    const DETAIL_C = isImposter && fellowImposters.length > 0;
+    const fellowLabel = fellowImposters.length > 1 ? "Your fellow imposters" : "Your fellow imposter";
 
     const onCompleteRef = useRef(onComplete);
     useEffect(() => {
@@ -25,6 +28,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
     const roleRef = useRef<HTMLHeadingElement>(null);
     const detailARef = useRef<HTMLSpanElement>(null);
     const detailBRef = useRef<HTMLSpanElement>(null);
+    const detailCRef = useRef<HTMLDivElement>(null);
     const yourRoleRef = useRef<HTMLHeadingElement>(null);
     const narrativeRef = useRef<HTMLParagraphElement>(null);
 
@@ -33,13 +37,14 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
             gsap.set("#ig-wall", { opacity: 0 });
             gsap.set("#ig-detail-rule", { opacity: 0, scaleX: 0 });
             gsap.set("#ig-deep", { opacity: 0 });
-            gsap.set([narrativeRef.current, yourRoleRef.current, roleRef.current, detailARef.current, detailBRef.current], { opacity: 0 });
+            gsap.set([narrativeRef.current, yourRoleRef.current, roleRef.current, detailARef.current, detailBRef.current, detailCRef.current], { opacity: 0 });
 
             gsap.set(narrativeRef.current, { filter: "blur(9px)", y: 10 });
             gsap.set(yourRoleRef.current, { filter: "blur(16px)" });
             gsap.set(roleRef.current, { filter: "blur(22px)", scale: 1.05 });
             gsap.set(detailARef.current, { filter: "blur(6px)", y: 8 });
             gsap.set(detailBRef.current, { filter: "blur(14px)", y: 6 });
+            gsap.set(detailCRef.current, { filter: "blur(10px)", y: 6 });
 
             const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
@@ -74,6 +79,10 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
                 tl.to(envRef.current, { opacity: 0.1, duration: 2.8, ease: "power2.inOut" }, "roleSpecific+=0.2")
                     .to("#ig-deep", { opacity: 0.85, duration: 3.2, ease: "power2.inOut" }, "roleSpecific+=0.2")
                     .fromTo(detailBRef.current, { letterSpacing: "0.3em", marginRight: "-0.3em" }, { letterSpacing: "0.16em", marginRight: "-0.16em", opacity: 1, filter: "blur(0px)", y: 0, duration: 1.4, ease: "power2.out" }, "roleSpecific+=0.75");
+
+                if (DETAIL_C) {
+                    tl.fromTo(detailCRef.current, { y: 10, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 1.2, ease: "power2.out" }, "roleSpecific+=1.1");
+                }
             } else {
                 tl.to(envRef.current, { opacity: 0.9, duration: 2.8, ease: "power2.inOut" }, "roleSpecific+=0.2").fromTo(
                     detailBRef.current,
@@ -84,7 +93,7 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
             }
 
             tl.addLabel("ending", 13)
-                .to([roleRef.current, detailARef.current, detailBRef.current, yourRoleRef.current, narrativeRef.current], { opacity: 0, duration: 1.4, ease: "power1.in" }, "ending")
+                .to([roleRef.current, detailARef.current, detailBRef.current, detailCRef.current, yourRoleRef.current, narrativeRef.current], { opacity: 0, duration: 1.4, ease: "power1.in" }, "ending")
                 .to(["#ig-deep", "#ig-detail-rule"], { opacity: 0, duration: 1.6, ease: "power1.in" }, "ending")
                 .to(envRef.current, { opacity: 0, duration: 1.8, ease: "power2.inOut" }, "ending")
                 .to(finalRef.current, { opacity: 1, duration: 1.8, ease: "power2.inOut" }, "ending+=0.2")
@@ -147,16 +156,18 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
             <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-[6vw] pt-[17vh] text-center">
                 <div id="ig-detail" className="flex flex-col items-center gap-[clamp(14px,2.4vh,28px)] text-center">
                     <div id="ig-detail-rule" className="h-px w-[clamp(64px,12vw,150px)] bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] opacity-0" />
-                    <span
-                        id="ig-detail-a"
-                        ref={detailARef}
-                        className={cn(
-                            isImposter ? "mr-[-0.28em] text-[clamp(10px,1.6vw,14px)] font-light tracking-[0.28em]" : "mr-[-0.55em] text-[clamp(10px,1.5vw,13px)] font-normal tracking-[0.55em]",
-                            "m-0whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] uppercase opacity-0",
-                        )}
-                    >
-                        {DETAIL_A}
-                    </span>
+                    {DETAIL_A && (
+                        <span
+                            id="ig-detail-a"
+                            ref={detailARef}
+                            className={cn(
+                                isImposter ? "mr-[-0.28em] text-[clamp(10px,1.6vw,14px)] font-light tracking-[0.28em]" : "mr-[-0.55em] text-[clamp(10px,1.5vw,13px)] font-normal tracking-[0.55em]",
+                                "m-0whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] uppercase opacity-0",
+                            )}
+                        >
+                            {DETAIL_A}
+                        </span>
+                    )}
                     <span
                         id="ig-detail-b"
                         ref={detailBRef}
@@ -167,6 +178,20 @@ export default function IntroPage({ onComplete, secretWord, role }: { onComplete
                     >
                         {DETAIL_B}
                     </span>
+
+                    {DETAIL_C && (
+                        <div id="ig-detail-c" ref={detailCRef} className="flex flex-col items-center gap-4 opacity-0 will-change-[opacity,filter,transform]">
+                            <span className="mr-[-0.28em] text-[clamp(10px,1.6vw,14px)] font-light tracking-[0.28em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_90%,transparent)] uppercase">{fellowLabel}</span>
+
+                            <div className="flex gap-24">
+                                {fellowImposters.map((name, i) => (
+                                    <div key={`${name}-${i}`} className="text-accent-red/90 m-0 mr-[-0.24em] flex items-center text-4xl leading-none font-medium tracking-[0.24em] whitespace-nowrap uppercase">
+                                        <span>{name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

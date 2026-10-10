@@ -153,6 +153,10 @@ export class RoomService {
             throw new BadRequestException(`At least ${MIN_PLAYERS} players are required`);
         }
 
+        if (room.settings.imposters > Math.min(1, Math.floor(room.players.length / 4))) {
+            throw new BadRequestException(`Too many imposters for ${room.players.length} players`);
+        }
+
         if (!room.players.every(({ ready }) => ready)) {
             throw new BadRequestException("Not all players are ready");
         }

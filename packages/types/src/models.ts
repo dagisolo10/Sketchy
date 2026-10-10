@@ -61,10 +61,10 @@ export type Game = {
     round: number;
     playing: boolean;
     remaining: number;
-    imposterId: string;
     secretWord: string;
     currentIndex: number;
     players: GamePlayer[];
+    imposters: GamePlayer[];
     activePlayer: GamePlayer;
 };
 

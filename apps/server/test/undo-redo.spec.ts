@@ -10,11 +10,13 @@ function makeRoom(playerIds: string[]): Room {
     return {
         roomId,
         hostId: playerIds[0]!,
-        maxPlayers: playerIds.length,
-        drawingTime: 60,
-        imposterCount: 0,
         countdown: 0,
         status: "playing",
+        settings: {
+            maxPlayers: playerIds.length,
+            drawingTime: 60,
+            imposters: 0,
+        },
         players: playerIds.map((playerId, i) => ({ playerId, name: `p${i}`, ready: true })),
     };
 }

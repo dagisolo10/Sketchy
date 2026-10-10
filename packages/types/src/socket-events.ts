@@ -16,7 +16,7 @@ export interface ServerToClientEvents {
 
     "game:timer": (data: { remaining: number }) => void;
     "game:next_turn": (data: { activePlayer: GamePlayer; drawingState: DrawingState }) => void;
-    "game:role": (data: { role: Role; secretWord: string | null }) => void;
+    "game:role": (data: { role: Role; secretWord: string | null; fellowImposters: string[] }) => void;
     "game:state": (data: { game: Game; drawingState: DrawingState }) => void;
     "game:round_count": (data: { round: number; drawingState: DrawingState }) => void;
 

@@ -12,13 +12,15 @@ export default function GameIntroPage() {
     const hasEmittedRef = useRef(false);
     const [role, setRole] = useState<Role | null>(null);
     const [secretWord, setSecretWord] = useState<string | null>(null);
+    const [fellowImposters, setFellowImposters] = useState<string[]>([]);
 
     useEffect(() => {
         if (!socket || !roomId) return;
 
-        socket.on("game:role", ({ role, secretWord }) => {
+        socket.on("game:role", ({ role, secretWord, fellowImposters }) => {
             setRole(role);
             setSecretWord(secretWord);
+            setFellowImposters(fellowImposters);
         });
 
         socket.emit("game:reveal:role", { roomId });
@@ -41,5 +43,5 @@ export default function GameIntroPage() {
         return null;
     }
 
-    return <IntroPage role={role} secretWord={secretWord} onComplete={handleIntroComplete} />;
+    return <IntroPage role={role} secretWord={secretWord} fellowImposters={fellowImposters} onComplete={handleIntroComplete} />;
 }

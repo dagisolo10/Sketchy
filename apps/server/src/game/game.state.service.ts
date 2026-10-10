@@ -23,17 +23,17 @@ export class GameStateService {
     prepareGame(room: Room) {
         const players = random.shuffle(room.players).map((p) => ({ ...p, color: this.generateColor() })) as GamePlayer[];
 
-        // add more imposters
+        const imposters = random.shuffle([...players]).slice(0, room.settings.imposters);
 
         this.gamesMap.set(room.roomId, {
             players,
             round: 1,
+            imposters,
             playing: false,
             currentIndex: 0,
             activePlayer: players[0],
             secretWord: random.choice(WORDS)!,
             remaining: room.settings.drawingTime,
-            imposterId: random.choice(players)!.playerId,
         });
 
         this.drawingStateMap.set(room.roomId, {
@@ -50,9 +50,14 @@ export class GameStateService {
         if (!game) return;
 
         for (const { playerId } of game.players) {
+            const isImposter = game.imposters.some((imposter) => imposter.playerId === playerId);
+
+            const fellowImposters = isImposter ? game.imposters.filter((imposter) => imposter.playerId !== playerId).map(({ name }) => name) : [];
+
             this.socketIoService.emitTo("game:role", playerId, {
-                role: playerId === game.imposterId ? "imposter" : "civilian",
-                secretWord: playerId === game.imposterId ? null : game.secretWord,
+                fellowImposters,
+                role: isImposter ? "imposter" : "civilian",
+                secretWord: isImposter ? null : game.secretWord,
             });
         }
     }

@@ -37,6 +37,8 @@ function GameCanvasPage({ room }: { room: Room }) {
     const [game, setGame] = useState<Game | null>(null);
     const [drawingState, setDrawingState] = useState<DrawingState | null>(null);
 
+    const isImposter = !!game && !!player && game.imposters.some(({ playerId }) => playerId === player?.playerId);
+
     useEffect(() => {
         if (!socket) return;
 
@@ -98,6 +100,29 @@ function GameCanvasPage({ room }: { room: Room }) {
                                 <Countdown label="ACTIVE DRAWER" value={game?.activePlayer.name ?? "..."} variant="danger" />
                             </div>
 
+                            <div className="flex flex-wrap items-center gap-4">
+                                {game ? (
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-foreground/80 text-sm tracking-widest uppercase">Your role</span>
+                                        <span
+                                            className={cn(
+                                                "rounded border px-3 py-1 text-lg font-bold tracking-wider",
+                                                isImposter ? "border-accent-red/50 bg-accent-red/20 text-accent-red glow-red" : "border-accent-green/50 bg-accent-green/20 text-accent-green glow-green",
+                                            )}
+                                        >
+                                            {isImposter ? "IMPOSTER" : "CIVILIAN"}
+                                        </span>
+                                    </div>
+                                ) : null}
+
+                                {game && !isImposter ? (
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-foreground/80 text-sm tracking-widest uppercase">Secret word</span>
+                                        <span className="text-accent-green text-glow-green text-lg font-bold tracking-widest uppercase">{game.secretWord}</span>
+                                    </div>
+                                ) : null}
+                            </div>
+
                             <div className="flex items-center gap-4">
                                 <Countdown label="ROUND" value={game?.round.toString() ?? "1"} variant="danger" />
                                 <Countdown label="TIME LEFT" value={game ? `00:${game.remaining.toString().padStart(2, "0")}` : "00:--"} variant="warning" />
@@ -110,6 +135,30 @@ function GameCanvasPage({ room }: { room: Room }) {
                     </div>
 
                     <aside className="col-span-1 space-y-4">
+                        {game && isImposter ? (
+                            <div className="bg-card border-accent-red/40 border p-4">
+                                <div className="mb-3 flex items-center gap-2">
+                                    <span className="text-accent-red glow-red size-1.5 rounded-full bg-current" />
+                                    <span className="text-accent-red text-xs font-bold tracking-widest uppercase">Your fellow imposters</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {game.imposters
+                                        .filter(({ playerId }) => playerId !== player?.playerId)
+                                        .map((p) => (
+                                            <div key={p.playerId} className="bg-accent-red/5 border-accent-red/20 flex items-center justify-between border px-3 py-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="bg-accent-red/20 text-accent-red border-accent-red/40 flex size-7 items-center justify-center border text-[10px] font-black">{getInitials(p.name)}</div>
+                                                    <span className="text-accent-red text-xs font-bold tracking-wide uppercase">{p.name}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
+                                <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+                                    {game.imposters.length > 1 ? "Stay quiet. They are the only ones you can trust." : "You are alone. Bluff hard and find the word."}
+                                </p>
+                            </div>
+                        ) : null}
+
                         <div className="bg-card border border-slate-800 p-4">
                             <div className="mb-3 text-xs font-bold tracking-widest text-slate-400 uppercase">PLAYERS</div>
                             <div className="space-y-2">
