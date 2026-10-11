@@ -1,11 +1,18 @@
+import { matchPath, Outlet, useLocation, useParams } from "react-router";
+import type { UseMutationResult } from "@tanstack/react-query";
 import { useSocket } from "@/contexts/socket-context";
 import { useLeaveRoom } from "@/hooks/tan-stack/room";
 import { useEffect, useRef } from "react";
-import { matchPath, Outlet, useLocation, useParams } from "react-router";
+
 
 export function RoomLifecycleTracker() {
     const location = useLocation();
     const leaveRoomMt = useLeaveRoom();
+    const leaveRoomMtRef = useRef<UseMutationResult<void, Error, { roomId: string }, unknown>>(null);
+
+    useEffect(() => {
+        leaveRoomMtRef.current = leaveRoomMt;
+    }, [leaveRoomMt]);
 
     const prevRoomId = useRef<string | null>(null);
     const roomId = matchPath("/room/:roomId/*", location.pathname)?.params.roomId ?? null;
@@ -13,12 +20,12 @@ export function RoomLifecycleTracker() {
     useEffect(() => {
         const previousRoomId = prevRoomId.current;
 
-        if (previousRoomId && previousRoomId !== roomId) {
-            leaveRoomMt.mutate({ roomId: previousRoomId });
+        if (previousRoomId && previousRoomId !== roomId && leaveRoomMtRef.current) {
+            leaveRoomMtRef.current.mutate({ roomId: previousRoomId });
         }
 
         prevRoomId.current = roomId;
-    }, [leaveRoomMt, location.pathname, roomId]);
+    }, [location.pathname, roomId]);
 
     return <Outlet />;
 }
