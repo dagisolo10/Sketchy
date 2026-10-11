@@ -9,14 +9,14 @@ export class RoomGateway {
     constructor(private readonly roomStore: RoomStore) {}
 
     @Sub("room:joined")
-    async playerJoinedRoom(client: TypedSocket, { roomId }: ClientData<"room:joined">[0]) {
+    async playerJoinedRoom(client: TypedSocket, { roomId }: ClientData<"room:joined">) {
         if (!this.roomStore.isPlayerInRoom(roomId, client.data.player.playerId)) return;
 
         await client.join(roomId);
     }
 
     @Sub("room:get:state")
-    getRoomState(client: TypedSocket, { roomId }: ClientData<"room:get:state">[0]) {
+    getRoomState(client: TypedSocket, { roomId }: ClientData<"room:get:state">) {
         if (!this.roomStore.isPlayerInRoom(roomId, client.data.player.playerId)) return;
 
         const room = this.roomStore.getRoom(roomId);

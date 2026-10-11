@@ -1,13 +1,18 @@
 import DrawingBoard from "@/components/drawing-board";
+import GameOver from "@/components/game-over";
 import GameShell from "@/components/game-shell";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Countdown } from "@/components/ui/countdown";
+import VotingIntro from "@/components/voting-intro";
+import VotingResult from "@/components/voting-result";
+import VotingView from "@/components/voting-view";
 import { useSocket } from "@/contexts/socket-context";
+import useVoting from "@/hooks/custom/use-voting";
 import { useGetRoom } from "@/hooks/tan-stack/room";
 import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
 import { getInitials } from "@/utils/helpers";
-import { type DrawingState, type Game, type Room } from "@package/types";
+import { type DrawingState, type Game, type GameWinner, type Room } from "@package/types";
 import { cn } from "cn";
 import { LogOut, Paintbrush } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,11 +38,17 @@ function GameCanvasPage({ room }: { room: Room }) {
     const { socket } = useSocket();
     const { data: player } = useGetOrCreateSession();
 
+    const voting = useVoting({ roomId, socket, player });
+
     const [myTurn, setMyTurn] = useState(false);
     const [game, setGame] = useState<Game | null>(null);
     const [drawingState, setDrawingState] = useState<DrawingState | null>(null);
+    const [winner, setWinner] = useState<GameWinner | null>(null);
+    const [secretWord, setSecretWord] = useState<string>("");
 
     const isImposter = !!game && !!player && game.imposters.some(({ playerId }) => playerId === player?.playerId);
+    const isEliminated = !!game && !!player && !!game.players.find(({ playerId }) => playerId === player?.playerId)?.eliminated;
+    const selectedVote = voting.targetId;
 
     useEffect(() => {
         if (!socket) return;
@@ -57,6 +68,10 @@ function GameCanvasPage({ room }: { room: Room }) {
             setMyTurn(activePlayer.playerId === player?.playerId);
             setGame((game) => (game ? { ...game, activePlayer } : game));
         });
+        socket.on("game:over", ({ winner, secretWord }) => {
+            setWinner(winner);
+            setSecretWord(secretWord);
+        });
 
         socket.emit("game:get:state", { roomId });
 
@@ -65,8 +80,36 @@ function GameCanvasPage({ room }: { room: Room }) {
             socket.off("game:timer");
             socket.off("game:next_turn");
             socket.off("game:round_count");
+            socket.off("game:over");
         };
     }, [player?.playerId, roomId, socket]);
+
+    if (winner) {
+        return <GameOver winner={winner} secretWord={secretWord} roomId={roomId} />;
+    }
+
+    if (voting.state.phase === "intro") {
+        return <VotingIntro onComplete={voting.completeIntro} />;
+    }
+
+    if (voting.state.phase === "result") {
+        return <VotingResult result={voting.state.result} onComplete={voting.completeResult} />;
+    }
+
+    if (voting.state.phase === "voting") {
+        return (
+            <VotingView
+                round={voting.state.round}
+                selectedVote={selectedVote}
+                onSelect={voting.selectVote}
+                onSubmit={voting.submitVote}
+                currentPlayerId={player?.playerId}
+                remaining={voting.state.remaining}
+                phase={voting.submitted || isEliminated ? "submitted" : "voting"}
+                players={game ? game.players.filter(({ eliminated }) => !eliminated) : []}
+            />
+        );
+    }
 
     return (
         <GameShell
@@ -129,7 +172,7 @@ function GameCanvasPage({ room }: { room: Room }) {
                             </div>
                         </div>
 
-                        <div className="flex h-[calc(100vh-20rem)] min-h-95 flex-col lg:h-[calc(100vh-14rem)]">
+                        <div className="flex h-120 min-h-95 flex-col lg:h-150">
                             <DrawingBoard myTurn={myTurn} roomId={roomId} drawingState={drawingState} setDrawingState={setDrawingState} />
                         </div>
                     </div>
@@ -153,9 +196,7 @@ function GameCanvasPage({ room }: { room: Room }) {
                                             </div>
                                         ))}
                                 </div>
-                                <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-                                    {game.imposters.length > 1 ? "Stay quiet. They are the only ones you can trust." : "You are alone. Bluff hard and find the word."}
-                                </p>
+                                <p className="mt-3 text-xs leading-relaxed text-slate-500">{game.imposters.length > 1 ? "Stay quiet. They are the only ones you can trust." : "You are alone. Bluff hard and find the word."}</p>
                             </div>
                         ) : null}
 
@@ -164,19 +205,23 @@ function GameCanvasPage({ room }: { room: Room }) {
                             <div className="space-y-2">
                                 {game?.players.map((p) => {
                                     const drawing = p.playerId === game?.activePlayer.playerId;
+                                    const eliminated = p.eliminated;
 
                                     return (
-                                        <div key={p.name} className="bg-background/40 flex items-center justify-between border border-slate-800 px-3 py-2">
+                                        <div key={p.name} className={cn("bg-background/40 flex items-center justify-between border px-3 py-2", eliminated ? "border-accent-red/30 opacity-60" : "border-slate-800")}>
                                             <div className="flex items-center gap-2">
                                                 <div
-                                                    className={cn("flex size-7 items-center justify-center border text-[10px] font-black", drawing ? "border-primary/60 bg-primary/10 text-primary" : "bg-background/60 border-slate-700 text-slate-400")}
+                                                    className={cn(
+                                                        "flex size-7 items-center justify-center border text-[10px] font-black",
+                                                        eliminated ? "border-accent-red/40 bg-accent-red/10 text-accent-red/70" : drawing ? "border-primary/60 bg-primary/10 text-primary" : "bg-background/60 border-slate-700 text-slate-400",
+                                                    )}
                                                 >
                                                     {getInitials(p.name)}
                                                 </div>
-                                                <span className={cn("text-xs font-bold tracking-wide uppercase", drawing ? "text-primary" : "text-slate-300")}>{p.name}</span>
+                                                <span className={cn("text-xs font-bold tracking-wide uppercase", eliminated ? "text-accent-red/70 line-through" : drawing ? "text-primary" : "text-slate-300")}>{p.name}</span>
                                             </div>
-                                            <Chip variant={drawing ? "default" : "default"} selected={drawing} size="sm">
-                                                {drawing ? "DRAWING" : "GUESSING"}
+                                            <Chip variant={eliminated ? "danger" : "default"} selected={drawing && !eliminated} size="sm">
+                                                {eliminated ? "ELIMINATED" : drawing ? "DRAWING" : "GUESSING"}
                                             </Chip>
                                         </div>
                                     );

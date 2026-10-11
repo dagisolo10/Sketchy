@@ -96,7 +96,7 @@ export default function HomePage() {
     }
 
     return (
-        <div className="relative min-h-screen">
+        <div className="relative h-screen">
             <div className="scanlines pointer-events-none fixed inset-0 z-50 opacity-40" />
             <div className="bg-accent-red/20 pointer-events-none fixed right-0 bottom-0 size-150 rounded-full blur-[180px]" />
             <div className="bg-primary/20 pointer-events-none fixed top-0 left-1/2 h-100 w-250 -translate-x-1/2 rounded-full blur-[150px]" />
@@ -143,9 +143,7 @@ export default function HomePage() {
 
                         {STEPS.map(({ step, title, description, icon: Icon, tag, tagColor, badgeStyle, hoverTitle }) => (
                             <div key={step} className="hud-box group bg-card relative z-10 flex flex-col border border-slate-800 p-6 transition-all duration-500 hover:border-cyan-500/50">
-                                <div className={cn("mb-5 flex size-12 items-center justify-center border text-xl font-bold transition-transform duration-300 group-hover:scale-110", badgeStyle)}>
-                                    {step}
-                                </div>
+                                <div className={cn("mb-5 flex size-12 items-center justify-center border text-xl font-bold transition-transform duration-300 group-hover:scale-110", badgeStyle)}>{step}</div>
                                 <h3 className={cn("mb-2 text-xl font-bold transition-transform duration-300 group-hover:scale-102", hoverTitle)}>{title}</h3>
                                 <p className="mb-4 leading-relaxed text-slate-400">{description}</p>
 
@@ -164,8 +162,7 @@ export default function HomePage() {
 
                 <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                     <div className="flex flex-wrap items-center justify-center sm:justify-start">
-                        <span className="text-primary px-2 py-0.5 text-xl font-black tracking-widest uppercase">SKETCHY</span>{" "}
-                        <span className="font-semibold tracking-wider uppercase">• MULTIPLAYER SOCIAL DEDUCTION DRAWING GAME</span>
+                        <span className="text-primary px-2 py-0.5 text-xl font-black tracking-widest uppercase">SKETCHY</span> <span className="font-semibold tracking-wider uppercase">• MULTIPLAYER SOCIAL DEDUCTION DRAWING GAME</span>
                     </div>
 
                     <div className="font-mono text-sm tracking-wider uppercase">

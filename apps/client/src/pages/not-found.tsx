@@ -4,7 +4,7 @@ import { Link } from "react-router";
 
 export default function NotFound() {
     return (
-        <main className="relative flex min-h-screen flex-col justify-between bg-[#05070a] px-6 py-10 text-slate-300 lg:px-16">
+        <main className="relative flex h-screen flex-col justify-between px-6 py-10 text-slate-300 lg:px-16">
             <div className="flex items-center justify-between gap-4">
                 <Link to="/" className="group flex items-center gap-2">
                     <span className="text-glow group-hover:text-primary text-2xl font-black tracking-wider transition-colors">

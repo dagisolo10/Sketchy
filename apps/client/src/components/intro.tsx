@@ -1,9 +1,8 @@
-import type { Role } from "@package/types";
-import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
-import { gsap } from "gsap";
+import type { Role } from "@package/types";
 import { cn } from "cn";
-
+import { gsap } from "gsap";
+import { useEffect, useRef } from "react";
 
 gsap.registerPlugin(useGSAP);
 
@@ -16,21 +15,21 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
     const DETAIL_C = isImposter && fellowImposters.length > 0;
     const fellowLabel = fellowImposters.length > 1 ? "Your fellow imposters" : "Your fellow imposter";
 
-    const onCompleteRef = useRef(onComplete);
-    useEffect(() => {
-        onCompleteRef.current = onComplete;
-    }, [onComplete]);
-
     const envRef = useRef<HTMLDivElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const finalRef = useRef<HTMLDivElement>(null);
     const cameraRef = useRef<HTMLDivElement>(null);
+    const detailCRef = useRef<HTMLDivElement>(null);
     const roleRef = useRef<HTMLHeadingElement>(null);
     const detailARef = useRef<HTMLSpanElement>(null);
     const detailBRef = useRef<HTMLSpanElement>(null);
-    const detailCRef = useRef<HTMLDivElement>(null);
     const yourRoleRef = useRef<HTMLHeadingElement>(null);
     const narrativeRef = useRef<HTMLParagraphElement>(null);
+
+    const onCompleteRef = useRef(onComplete);
+    useEffect(() => {
+        onCompleteRef.current = onComplete;
+    }, [onComplete]);
 
     useGSAP(
         () => {
@@ -48,59 +47,61 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
 
             const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
-            tl.addLabel("room", 0.15).to("#ig-wall", { opacity: 1, duration: 1, ease: "sine.inOut" }, "room").to(cameraRef.current, { scale: 1.25, duration: 12, ease: "none" }, "room");
+            tl.addLabel("intro-room", 0.15).to("#ig-wall", { opacity: 1, duration: 1, ease: "sine.inOut" }, "intro-room").to(cameraRef.current, { scale: 1.25, duration: 12, ease: "none" }, "intro-room");
 
-            tl.addLabel("narrative", 1.5)
-                .to(narrativeRef.current, { opacity: 1, filter: "blur(0px)", y: 0, duration: 1, ease: "power2.out" }, "narrative")
-                .to(narrativeRef.current, { opacity: 0, filter: "blur(7px)", y: -8, duration: 1, ease: "power1.in" }, "narrative+=2");
+            tl.addLabel("intro-narrative", 1.5)
+                .to(narrativeRef.current, { opacity: 1, filter: "blur(0px)", y: 0, duration: 1, ease: "power2.out" }, "intro-narrative")
+                .to(narrativeRef.current, { opacity: 0, filter: "blur(7px)", y: -8, duration: 1, ease: "power1.in" }, "intro-narrative+=2");
 
-            tl.addLabel("silence", 4).to(envRef.current, { opacity: 0.05, duration: 0.5, ease: "power2.inOut" }, "silence");
+            tl.addLabel("intro-silence", 4).to(envRef.current, { opacity: 0.05, duration: 0.5, ease: "power2.inOut" }, "intro-silence");
 
-            tl.addLabel("blackout", 4.5).to(envRef.current, { opacity: 0, duration: 1.0, ease: "power2.inOut" }, "blackout");
+            tl.addLabel("intro-blackout", 4.5).to(envRef.current, { opacity: 0, duration: 1.0, ease: "power2.inOut" }, "intro-blackout");
 
-            tl.addLabel("yourRole", 5)
-                .fromTo(yourRoleRef.current, { letterSpacing: "0.55em", marginRight: "-0.55em" }, { letterSpacing: "0.24em", marginRight: "-0.24em", opacity: 1, filter: "blur(0px)", duration: 2, ease: "power2.out" }, "yourRole")
-                .to(yourRoleRef.current, { letterSpacing: "0.65em", opacity: 0, filter: "blur(11px)", duration: 1, ease: "power1.in" }, "yourRole+=2.6");
+            tl.addLabel("intro-yourRole", 5)
+                .fromTo(yourRoleRef.current, { letterSpacing: "0.55em", marginRight: "-0.55em" }, { letterSpacing: "0.24em", marginRight: "-0.24em", opacity: 1, filter: "blur(0px)", duration: 2, ease: "power2.out" }, "intro-yourRole")
+                .to(yourRoleRef.current, { letterSpacing: "0.65em", opacity: 0, filter: "blur(11px)", duration: 1, ease: "power1.in" }, "intro-yourRole+=2.6");
 
-            tl.addLabel("reveal", 8.5)
-                .to(envRef.current, { opacity: 0.4, duration: 2.2, ease: "power2.inOut" }, "reveal+=0.3")
-                .to(roleRef.current, { opacity: 0.5, duration: 0.06, ease: "none" }, "reveal+=0.3")
-                .to(roleRef.current, { opacity: 0.08, duration: 0.08, ease: "none" }, "reveal+=0.38")
-                .to(roleRef.current, { opacity: 1, duration: 0.1, ease: "none" }, "reveal+=0.5")
-                .fromTo(roleRef.current, { letterSpacing: "0.5em", marginRight: "-0.5em" }, { letterSpacing: "0.16em", marginRight: "-0.16em", filter: "blur(0px)", scale: 1, duration: 1.6, ease: "power3.out" }, "reveal+=0.32")
-                .to(cameraRef.current, { scale: 1.078, x: -23, duration: 4.0, ease: "power1.out" }, "yourRole+=0.7");
+            tl.addLabel("intro-reveal", 8.5)
+                .to(envRef.current, { opacity: 0.4, duration: 2.2, ease: "power2.inOut" }, "intro-reveal+=0.3")
+                .to(roleRef.current, { opacity: 0.5, duration: 0.06, ease: "none" }, "intro-reveal+=0.3")
+                .to(roleRef.current, { opacity: 0.08, duration: 0.08, ease: "none" }, "intro-reveal+=0.38")
+                .to(roleRef.current, { opacity: 1, duration: 0.1, ease: "none" }, "intro-reveal+=0.5")
+                .fromTo(roleRef.current, { letterSpacing: "0.5em", marginRight: "-0.5em" }, { letterSpacing: "0.16em", marginRight: "-0.16em", filter: "blur(0px)", scale: 1, duration: 1.6, ease: "power3.out" }, "intro-reveal+=0.32")
+                .to(cameraRef.current, { scale: 1.078, x: -23, duration: 4.0, ease: "power1.out" }, "intro-yourRole+=0.7");
 
-            tl.addLabel("roleSpecific", 10.5)
-                .to("#ig-detail-rule", { opacity: 1, scaleX: 1, duration: 1.2, ease: "power2.out" }, "roleSpecific")
-                .to(roleRef.current, { y: -46, duration: 1.4, ease: "power2.out" }, "roleSpecific")
-                .to(detailARef.current, { opacity: 1, filter: "blur(0px)", y: 0, duration: 1, ease: "power2.out" }, "roleSpecific");
+            tl.addLabel("intro-roleSpecific", 10.5)
+                .to("#ig-detail-rule", { opacity: 1, scaleX: 1, duration: 1.2, ease: "power2.out" }, "intro-roleSpecific")
+                .to(roleRef.current, { y: -46, duration: 1.4, ease: "power2.out" }, "intro-roleSpecific")
+                .to(detailARef.current, { opacity: 1, filter: "blur(0px)", y: 0, duration: 1, ease: "power2.out" }, "intro-roleSpecific");
 
             if (isImposter) {
-                tl.to(envRef.current, { opacity: 0.1, duration: 2.8, ease: "power2.inOut" }, "roleSpecific+=0.2")
-                    .to("#ig-deep", { opacity: 0.85, duration: 3.2, ease: "power2.inOut" }, "roleSpecific+=0.2")
-                    .fromTo(detailBRef.current, { letterSpacing: "0.3em", marginRight: "-0.3em" }, { letterSpacing: "0.16em", marginRight: "-0.16em", opacity: 1, filter: "blur(0px)", y: 0, duration: 1.4, ease: "power2.out" }, "roleSpecific+=0.75");
+                tl.to(envRef.current, { opacity: 0.1, duration: 2.8, ease: "power2.inOut" }, "intro-roleSpecific+=0.2")
+                    .to("#ig-deep", { opacity: 0.85, duration: 3.2, ease: "power2.inOut" }, "intro-roleSpecific+=0.2")
+                    .fromTo(
+                        detailBRef.current,
+                        { letterSpacing: "0.3em", marginRight: "-0.3em" },
+                        { letterSpacing: "0.16em", marginRight: "-0.16em", opacity: 1, filter: "blur(0px)", y: 0, duration: 1.4, ease: "power2.out" },
+                        "intro-roleSpecific+=0.75",
+                    );
 
                 if (DETAIL_C) {
-                    tl.fromTo(detailCRef.current, { y: 10, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 1.2, ease: "power2.out" }, "roleSpecific+=1.1");
+                    tl.fromTo(detailCRef.current, { y: 10, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 1.2, ease: "power2.out" }, "intro-roleSpecific+=1.1");
                 }
             } else {
-                tl.to(envRef.current, { opacity: 0.9, duration: 2.8, ease: "power2.inOut" }, "roleSpecific+=0.2").fromTo(
+                tl.to(envRef.current, { opacity: 0.9, duration: 2.8, ease: "power2.inOut" }, "intro-roleSpecific+=0.2").fromTo(
                     detailBRef.current,
                     { letterSpacing: "0.5em", marginRight: "-0.5em" },
                     { letterSpacing: "0.3em", marginRight: "-0.3em", opacity: 1, filter: "blur(0px)", y: 0, duration: 1.4, ease: "power2.out" },
-                    "roleSpecific+=0.75",
+                    "intro-roleSpecific+=0.75",
                 );
             }
 
-            tl.addLabel("ending", 13)
-                .to([roleRef.current, detailARef.current, detailBRef.current, detailCRef.current, yourRoleRef.current, narrativeRef.current], { opacity: 0, duration: 1.4, ease: "power1.in" }, "ending")
-                .to(["#ig-deep", "#ig-detail-rule"], { opacity: 0, duration: 1.6, ease: "power1.in" }, "ending")
-                .to(envRef.current, { opacity: 0, duration: 1.8, ease: "power2.inOut" }, "ending")
-                .to(finalRef.current, { opacity: 1, duration: 1.8, ease: "power2.inOut" }, "ending+=0.2")
-                .addLabel("end")
-                .call(() => {
-                    onCompleteRef.current?.();
-                });
+            tl.addLabel("intro-ending", 13)
+                .to([roleRef.current, detailARef.current, detailBRef.current, detailCRef.current, yourRoleRef.current, narrativeRef.current], { opacity: 0, duration: 1.4, ease: "power1.in" }, "intro-ending")
+                .to(["#ig-deep", "#ig-detail-rule"], { opacity: 0, duration: 1.6, ease: "power1.in" }, "intro-ending")
+                .to(envRef.current, { opacity: 0, duration: 1.8, ease: "power2.inOut" }, "intro-ending")
+                .to(finalRef.current, { opacity: 1, duration: 1.8, ease: "power2.inOut" }, "intro-ending+=0.2")
+                .addLabel("intro-end");
 
             tl.eventCallback("onComplete", () => onCompleteRef.current?.());
 
@@ -122,23 +123,23 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
             <div id="ig-deep" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(0,0,0,0)_8%,rgba(0,0,0,0.72)_72%,rgba(0,0,0,0.95)_100%)] opacity-0" />
             <div id="ig-vignette" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(0,0,0,0)_30%,rgba(0,0,0,0.42)_64%,rgba(0,0,0,0.9)_100%)]" />
 
-            <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-[6vw] text-center">
-                <p id="ig-narrative" ref={narrativeRef} className="m-0 mr-[-0.4em] text-[clamp(48px,2.8vw,16px)] font-light tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_74%,transparent)] uppercase opacity-0">
+            <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
+                <p id="ig-narrative" ref={narrativeRef} className="m-0 mr-[-0.4em] font-light tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_74%,transparent)] uppercase opacity-0">
                     {NARRATIVE}
                 </p>
             </div>
 
-            <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-[6vw] text-center">
+            <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
                 <h2
                     id="ig-your-role"
                     ref={yourRoleRef}
-                    className="m-0 mr-[-0.55em] text-[clamp(26px,5.6vw,64px)] font-normal tracking-[0.55em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_94%,transparent)] uppercase opacity-0 will-change-[opacity,filter,transform]"
+                    className="m-0 mr-[-0.55em] text-2xl font-normal tracking-[0.55em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_94%,transparent)] uppercase opacity-0 will-change-[opacity,filter,transform]"
                 >
                     Your Role
                 </h2>
             </div>
 
-            <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-[6vw] pb-[13vh] text-center">
+            <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 pb-24 text-center">
                 <h1
                     id="ig-role"
                     ref={roleRef}
@@ -146,22 +147,22 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
                         isImposter ? "text-accent-red" : "text-accent-green",
                         isImposter ? "text-shadow-[0_0_40px_var(--accent-red-glow)]" : "text-shadow-[0_0_40px_var(--accent-green-glow)]",
                         isImposter ? "text-shadow-[0_0_130px_rgba(255,42,109,0.24)]" : "text-shadow-[0_0_40px_rgba(5,255,161,0.24)]",
-                        "m-0 mr-[-0.5em] text-[clamp(30px,9vw,112px)] leading-none font-medium tracking-[0.5em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform]",
+                        "m-0 mr-[-0.5em] text-7xl leading-none font-medium tracking-[0.5em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform] sm:text-8xl",
                     )}
                 >
                     {role}
                 </h1>
             </div>
 
-            <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-[6vw] pt-[17vh] text-center">
-                <div id="ig-detail" className="flex flex-col items-center gap-[clamp(14px,2.4vh,28px)] text-center">
-                    <div id="ig-detail-rule" className="h-px w-[clamp(64px,12vw,150px)] bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] opacity-0" />
+            <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 pt-40 text-center">
+                <div id="ig-detail" className="flex flex-col items-center gap-6 text-center">
+                    <div id="ig-detail-rule" className="h-px w-37.5 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] opacity-0" />
                     {DETAIL_A && (
                         <span
                             id="ig-detail-a"
                             ref={detailARef}
                             className={cn(
-                                isImposter ? "mr-[-0.28em] text-[clamp(10px,1.6vw,14px)] font-light tracking-[0.28em]" : "mr-[-0.55em] text-[clamp(10px,1.5vw,13px)] font-normal tracking-[0.55em]",
+                                isImposter ? "mr-[-0.28em] text-sm font-light tracking-[0.28em]" : "mr-[-0.55em] font-normal tracking-[0.55em]",
                                 "m-0whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] uppercase opacity-0",
                             )}
                         >
@@ -171,17 +172,14 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
                     <span
                         id="ig-detail-b"
                         ref={detailBRef}
-                        className={cn(
-                            isImposter ? "mr-[-0.3em] text-[clamp(13px,2.6vw,22px)] tracking-[0.3em]" : "mr-[-0.5em] text-[clamp(30px,6.5vw,84px)] tracking-[0.5em]",
-                            "m-0 leading-none font-medium whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform]",
-                        )}
+                        className={cn(isImposter ? "mr-[-0.3em] text-2xl tracking-[0.3em]" : "mr-[-0.5em] text-7xl tracking-[0.5em]", "m-0 leading-none font-medium whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform]")}
                     >
                         {DETAIL_B}
                     </span>
 
                     {DETAIL_C && (
                         <div id="ig-detail-c" ref={detailCRef} className="flex flex-col items-center gap-4 opacity-0 will-change-[opacity,filter,transform]">
-                            <span className="mr-[-0.28em] text-[clamp(10px,1.6vw,14px)] font-light tracking-[0.28em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_90%,transparent)] uppercase">{fellowLabel}</span>
+                            <span className="mr-[-0.28em] text-sm font-light tracking-[0.28em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_90%,transparent)] uppercase">{fellowLabel}</span>
 
                             <div className="flex gap-24">
                                 {fellowImposters.map((name, i) => (

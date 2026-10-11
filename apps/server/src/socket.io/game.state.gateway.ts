@@ -3,7 +3,7 @@ import { RoomStore } from "@/room/room.store.js";
 import { Sub } from "@/socket.io/socket.io.gateway.js";
 import type { TypedSocket } from "@/types/socket.js";
 import { WebSocketGateway } from "@nestjs/websockets";
-import { ClientData } from "@package/types";
+import type { ClientData } from "@package/types";
 
 @WebSocketGateway()
 export class GameStateGateway {
@@ -13,20 +13,20 @@ export class GameStateGateway {
     ) {}
 
     @Sub("game:reveal:role")
-    revealRole(client: TypedSocket, { roomId }: ClientData<"game:reveal:role">[0]) {
+    revealRole(client: TypedSocket, { roomId }: ClientData<"game:reveal:role">) {
         if (!this.roomStore.isPlayerInRoom(roomId, client.data.player.playerId)) return;
 
         this.gameStateService.revealRoles(roomId);
     }
 
     @Sub("game:get:state")
-    getGame(client: TypedSocket, { roomId }: ClientData<"game:get:state">[0]) {
+    getGame(client: TypedSocket, { roomId }: ClientData<"game:get:state">) {
         if (!this.roomStore.isPlayerInRoom(roomId, client.data.player.playerId)) return;
 
         this.gameStateService.startGame(roomId);
 
         const game = this.gameStateService.getGame(roomId);
-        const drawingState = this.gameStateService.getDrawingStrokes(roomId);
+        const drawingState = this.gameStateService.getDrawingState(roomId);
 
         if (!game || !drawingState) return;
 
@@ -34,7 +34,7 @@ export class GameStateGateway {
     }
 
     @Sub("game:started")
-    startGame(client: TypedSocket, { roomId }: ClientData<"game:started">[0]) {
+    startGame(client: TypedSocket, { roomId }: ClientData<"game:started">) {
         if (!this.roomStore.isPlayerInRoom(roomId, client.data.player.playerId)) return;
 
         this.gameStateService.startGame(roomId);

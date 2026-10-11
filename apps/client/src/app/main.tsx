@@ -1,6 +1,9 @@
 import "@/app/index.css";
 
+import IntroPage from "@/components/intro";
 import { ToastProvider } from "@/components/ui/toast";
+import VotingIntro from "@/components/voting-intro";
+import VotingResult from "@/components/voting-result";
 import GameCanvasPage from "@/pages/game-canvas";
 import GameIntroPage from "@/pages/game-intro";
 import HomePage from "@/pages/home";
@@ -28,9 +31,16 @@ createRoot(document.getElementById("root")!).render(
                     <BrowserRouter>
                         <Routes>
                             <Route element={<RoomLifecycleTracker />}>
+                                <Route index Component={HomePage} />
                                 <Route path="*" Component={NotFound} />
-                                <Route path="/" Component={HomePage} />
-                                <Route path="/play" Component={PlayPage} />
+                                <Route path="play" Component={PlayPage} />
+
+                                <Route path="imposter" element={<IntroPage fellowImposters={["Bob", "Lee", "Swagger"]} role="imposter" secretWord={null} onComplete={() => {}} />} />
+                                <Route path="civilian" element={<IntroPage fellowImposters={[]} role="civilian" secretWord={"My Balls"} onComplete={() => {}} />} />
+
+                                <Route path="vote-intro" element={<VotingIntro onComplete={() => {}} />} />
+                                <Route path="vote-result" element={<VotingResult onComplete={() => {}} result={{ name: "Bob", playerId: "player-id", role: "imposter" }} />} />
+
                                 <Route element={<RoomLayout />} path="/room/:roomId">
                                     <Route index Component={RoomPage} />
                                     <Route path="intro" Component={GameIntroPage} />
