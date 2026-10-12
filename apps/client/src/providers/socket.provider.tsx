@@ -1,4 +1,5 @@
 import { SocketContext, type TypedSocket } from "@/contexts/socket-context";
+import { useToast } from "@/contexts/toast-context";
 import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
 import { SERVER_URL } from "@/lib/axios";
 import type { ServerToClientEvents } from "@package/types";
@@ -7,6 +8,7 @@ import { io, type ExtendedError } from "socket.io-client";
 
 export default function SocketProvider({ children }: PropsWithChildren) {
     const { data: player } = useGetOrCreateSession();
+    const toast = useToast();
 
     const [connected, setConnected] = useState(false);
     const [socket, setSocket] = useState<TypedSocket | null>(null);
@@ -25,6 +27,8 @@ export default function SocketProvider({ children }: PropsWithChildren) {
 
     function onConnectionError(error: Parameters<ServerToClientEvents["connection_error"]>[0]) {
         console.error("Error connecting to socket:", error);
+
+        toast.addToast({ variant: "error", title: "Connection error", description: error });
     }
 
     useEffect(() => {
@@ -51,6 +55,7 @@ export default function SocketProvider({ children }: PropsWithChildren) {
             socketInstance.off("connect_error", onConnectError);
             socketInstance.off("connection_error", onConnectionError);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [player]);
 
     return <SocketContext.Provider value={{ connected, socket }}>{children}</SocketContext.Provider>;

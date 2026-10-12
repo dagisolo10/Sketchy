@@ -1,5 +1,6 @@
 import { SessionService } from "@/session/session.service.js";
 import { SocketIoService } from "@/socket.io/socket.io.service.js";
+import { RoomStore } from "@/room/room.store.js";
 import type { TypedServer, TypedSocket } from "@/types/socket.js";
 import { OnModuleInit } from "@nestjs/common";
 import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
@@ -13,6 +14,7 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
     constructor(
         private readonly authService: SessionService,
         private readonly socketService: SocketIoService,
+        private readonly roomStore: RoomStore,
     ) {}
 
     @WebSocketServer()
@@ -26,7 +28,7 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
         const cookieHeader = client.handshake.headers.cookie;
 
         if (!cookieHeader) {
-            client.emit("connection_error", "Cookie is missing");
+            client.emit("connection_error", "We couldn't start a real-time connection because cookies are disabled. Please enable cookies and refresh.");
             client.disconnect();
             return;
         }
@@ -34,7 +36,7 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
         const sessionId = parseCookie(cookieHeader)["session"];
 
         if (!sessionId) {
-            client.emit("connection_error", "Session is missing");
+            client.emit("connection_error", "Your session is missing. Please refresh the page to reconnect.");
             client.disconnect();
             return;
         }
@@ -42,7 +44,7 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
         const player = this.authService.getPlayerBySession(sessionId);
 
         if (!player) {
-            client.emit("connection_error", "Player session not found");
+            client.emit("connection_error", "Your session has expired. Please refresh the page to start a new one.");
             client.disconnect();
             return;
         }
@@ -56,7 +58,9 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
 
         this.socketService.setPlayerSocket(player.playerId, client);
 
-        console.log("✅ Socket connected", player.name);
+        this.socketService.incrementOnline(player.playerId);
+
+        console.log("✅ Socket connected", player.name, `(online: ${this.socketService.getOnlineCount()})`);
     }
 
     handleDisconnect(client: TypedSocket) {
@@ -68,6 +72,20 @@ export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGat
 
         this.socketService.removePlayerSocket(client.data.player.playerId, client);
 
-        console.log("❌ Socket disconnected");
+        this.socketService.decrementOnline(client.data.player.playerId);
+
+        const room = this.roomStore.getRoomByPlayer(client.data.player.playerId);
+
+        if (room) {
+            const newHostId = this.roomStore.transferHost(room.roomId, client.data.player.playerId);
+
+            if (newHostId) {
+                this.socketService.emitTo("room:host:changed", room.roomId, { newHostId });
+
+                console.log("👑 Host transferred after disconnect", `to ${newHostId}`);
+            }
+        }
+
+        console.log("❌ Socket disconnected", client.data.player.name, `(online: ${this.socketService.getOnlineCount()})`);
     }
 }

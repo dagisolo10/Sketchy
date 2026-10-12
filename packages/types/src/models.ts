@@ -9,6 +9,7 @@ export type Player = {
     name: string;
     ready: boolean;
     playerId: string;
+    ping: number | null;
 };
 export type Room = {
     roomId: string;

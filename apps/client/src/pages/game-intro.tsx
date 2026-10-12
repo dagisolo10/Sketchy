@@ -1,5 +1,6 @@
 import IntroPage from "@/components/intro";
 import { useSocket } from "@/contexts/socket-context";
+import { Spinner } from "@/components/ui/spinner";
 import type { Role } from "@package/types";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -40,7 +41,13 @@ export default function GameIntroPage() {
     };
 
     if (!role) {
-        return null;
+        return (
+            <div className="bg-background relative flex min-h-screen flex-col items-center justify-center gap-4">
+                <Spinner className="text-primary-ink size-8" />
+
+                <p className="text-muted-foreground font-mono text-xs font-bold tracking-widest uppercase">Revealing your role...</p>
+            </div>
+        );
     }
 
     return <IntroPage role={role} secretWord={secretWord} fellowImposters={fellowImposters} onComplete={handleIntroComplete} />;

@@ -48,19 +48,19 @@ const positionStyles: Record<ToastPosition, string> = {
 };
 
 const variantStyles: Record<ToastVariant, string> = {
-    loading: "border-foreground/15",
-    info: "border-primary/30",
-    error: "border-red-500/30",
-    warning: "border-amber-500/30",
-    success: "border-accent-green/30",
+    loading: "border-border",
+    info: "border-info/40",
+    error: "border-danger/40",
+    warning: "border-warning/40",
+    success: "border-success/40",
 };
 
 const variantDots: Record<ToastVariant, string> = {
-    loading: "bg-foreground/40",
-    error: "bg-red-400",
-    info: "bg-primary",
-    warning: "bg-amber-400",
-    success: "bg-accent-green",
+    loading: "bg-muted-foreground",
+    error: "bg-danger",
+    info: "bg-info",
+    warning: "bg-warning",
+    success: "bg-success",
 };
 
 function ToastContainer({ toasts, onRemove, position }: { toasts: ToastItem[]; onRemove: (id: string) => void; position: ToastPosition }) {
@@ -78,31 +78,28 @@ function ToastContainer({ toasts, onRemove, position }: { toasts: ToastItem[]; o
                     <div
                         key={toast.id}
                         data-slot="tron-toast"
-                        className={cn(
-                            "bg-card/95 relative max-w-sm min-w-70 overflow-hidden rounded border px-4 py-3 shadow-[0_0_20px_rgba(var(--primary-rgb,0,180,255),0.06)] backdrop-blur-md",
-                            variantStyles[variant],
-                        )}
+                        className={cn("border-line border-border bg-card relative max-w-sm min-w-70 overflow-hidden rounded-[min(var(--radius-md),8px)] px-4 py-3 shadow-nb", variantStyles[variant])}
                     >
-                        <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.02)_2px,rgba(0,0,0,0.02)_4px)]" />
+                        <div className="paper-texture pointer-events-none absolute inset-0 opacity-50" />
                         <div className="flex items-start gap-2.5">
                             {isLoading ? (
-                                <span className="border-foreground/15 border-t-foreground/60 mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2" />
+                                <span className="border-border border-t-foreground/60 mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2" />
                             ) : (
-                                <span className={cn("mt-1 h-1.5 w-1.5 shrink-0 rounded-full", variantDots[variant])} />
+                                <span className={cn("mt-1.5 h-2 w-2 shrink-0", variantDots[variant])} />
                             )}
                             <div className="flex-1">
-                                <span className="text-foreground/70 block font-mono text-sm tracking-widest uppercase"> {toast.title} </span>
-                                {toast.description ? <span className="text-foreground/35 mt-0.5 block font-mono text-xs"> {toast.description} </span> : null}
+                                <span className="text-foreground block font-mono text-sm font-bold tracking-widest uppercase"> {toast.title} </span>
+                                {toast.description ? <span className="text-muted-foreground mt-0.5 block font-mono text-xs"> {toast.description} </span> : null}
                             </div>
-                            <button type="button" onClick={() => onRemove(toast.id)} className="text-foreground/20 hover:text-foreground/50 shrink-0">
+                            <button type="button" onClick={() => onRemove(toast.id)} className="text-muted-foreground hover:text-foreground shrink-0">
                                 <svg aria-hidden="true" width="8" height="8" viewBox="0 0 8 8" fill="none">
                                     <path d="M1 1l6 6M7 1l-6 6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                                 </svg>
                             </button>
                         </div>
 
-                        <div className="border-primary/30 pointer-events-none absolute top-0 left-0 h-1.5 w-1.5 border-t border-l" />
-                        <div className="border-primary/30 pointer-events-none absolute right-0 bottom-0 h-1.5 w-1.5 border-r border-b" />
+                        <div className="border-foreground/60 pointer-events-none absolute top-0 left-0 h-1.5 w-1.5 border-t border-l" />
+                        <div className="border-foreground/60 pointer-events-none absolute right-0 bottom-0 h-1.5 w-1.5 border-r border-b" />
                     </div>
                 );
             })}

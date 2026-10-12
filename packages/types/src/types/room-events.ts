@@ -4,6 +4,7 @@ export interface RoomServerToClientEvents {
     "room:state": (data: { room: Room }) => void;
     "room:game:starting": (data: { status: RoomStatus }) => void;
     "room:game:intro:started": (data: { roomId: string }) => void;
+    "room:host:changed": (data: { newHostId: string }) => void;
     "room:settings:updated": (data: { settings: RoomSettings }) => void;
     "room:game:countdown": (data: { roomId: string; countdown: number }) => void;
 }

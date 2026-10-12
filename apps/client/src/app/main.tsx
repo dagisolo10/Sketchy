@@ -1,16 +1,17 @@
 import "@/app/index.css";
 
-import IntroPage from "@/components/intro";
+import ErrorBoundary from "@/components/error-boundary";
 import { ToastProvider } from "@/components/ui/toast";
-import VotingIntro from "@/components/voting-intro";
-import VotingResult from "@/components/voting-result";
+import { ThemeProvider } from "@/contexts/theme-provider";
 import GameCanvasPage from "@/pages/game-canvas";
 import GameIntroPage from "@/pages/game-intro";
 import HomePage from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import PlayPage from "@/pages/play";
 import RoomPage from "@/pages/room";
+import UiShowcase from "@/pages/ui-showcase";
 import AuthProvider from "@/providers/auth-provider";
+import ConnectionSignalProvider from "@/providers/connection-signal.provider";
 import { RoomLayout, RoomLifecycleTracker } from "@/providers/room-lifecycle-tracker";
 import SocketProvider from "@/providers/socket.provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -25,32 +26,35 @@ const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-            <SocketProvider>
+        <ThemeProvider>
+            <AuthProvider>
                 <ToastProvider position="top-center">
-                    <BrowserRouter>
-                        <Routes>
-                            <Route element={<RoomLifecycleTracker />}>
-                                <Route index Component={HomePage} />
-                                <Route path="*" Component={NotFound} />
-                                <Route path="play" Component={PlayPage} />
+                    <SocketProvider>
+                        <ConnectionSignalProvider>
+                            <ErrorBoundary>
+                                <BrowserRouter>
+                                    <Routes>
+                                        <Route element={<RoomLifecycleTracker />}>
+                                            <Route index Component={HomePage} />
+                                            <Route path="*" Component={NotFound} />
+                                            <Route path="play" Component={PlayPage} />
 
-                                <Route path="imposter" element={<IntroPage fellowImposters={["Bob", "Lee", "Swagger"]} role="imposter" secretWord={null} onComplete={() => {}} />} />
-                                <Route path="civilian" element={<IntroPage fellowImposters={[]} role="civilian" secretWord={"My Balls"} onComplete={() => {}} />} />
+                                            <Route element={<RoomLayout />} path="/room/:roomId">
+                                                <Route index Component={RoomPage} />
+                                                <Route path="intro" Component={GameIntroPage} />
+                                                <Route path="game" Component={GameCanvasPage} />
+                                            </Route>
 
-                                <Route path="vote-intro" element={<VotingIntro onComplete={() => {}} />} />
-                                <Route path="vote-result" element={<VotingResult onComplete={() => {}} result={{ name: "Bob", playerId: "player-id", role: "imposter" }} />} />
-
-                                <Route element={<RoomLayout />} path="/room/:roomId">
-                                    <Route index Component={RoomPage} />
-                                    <Route path="intro" Component={GameIntroPage} />
-                                    <Route path="game" Component={GameCanvasPage} />
-                                </Route>
-                            </Route>
-                        </Routes>
-                    </BrowserRouter>
+                                            <Route path="ui" Component={UiShowcase} />
+                                            <Route path="ui/:section" Component={UiShowcase} />
+                                        </Route>
+                                    </Routes>
+                                </BrowserRouter>
+                            </ErrorBoundary>
+                        </ConnectionSignalProvider>
+                    </SocketProvider>
                 </ToastProvider>
-            </SocketProvider>
-        </AuthProvider>
+            </AuthProvider>
+        </ThemeProvider>
     </QueryClientProvider>,
 );

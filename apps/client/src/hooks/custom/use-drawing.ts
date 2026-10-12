@@ -13,11 +13,14 @@ export const PEN_SIZES: Record<PenSize, number> = {
     "very-thick": 20,
 };
 
+const VIRTUAL_WIDTH = 800;
+const VIRTUAL_HEIGHT = 600;
+
 export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps) {
     const layerRef = useRef<HTMLCanvasElement | null>(null);
     const strokesRef = useRef<{ strokes: Stroke[]; activeStroke: Stroke | null }>({ strokes: [], activeStroke: null });
 
-    const getContext = useCallback((): CanvasRenderingContext2D | null | null => {
+    const getContext = useCallback((): CanvasRenderingContext2D | null => {
         const canvas = canvasRef.current;
         if (!canvas) return null;
         const ctx = canvas.getContext("2d");
@@ -37,15 +40,18 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
     const getCanvasPoints = useCallback(
         (e: PointerEvent): Point | null => {
             const canvas = canvasRef.current;
-
             if (!canvas) return null;
 
             const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return null;
 
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const rawX = typeof e.offsetX === "number" ? e.offsetX : e.clientX - rect.left;
+            const rawY = typeof e.offsetY === "number" ? e.offsetY : e.clientY - rect.top;
 
-            return { x, y };
+            return {
+                x: (rawX / rect.width) * VIRTUAL_WIDTH,
+                y: (rawY / rect.height) * VIRTUAL_HEIGHT,
+            };
         },
         [canvasRef],
     );
@@ -55,27 +61,24 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
             strokesRef.current = { strokes, activeStroke };
 
             const canvasCxt = getCanvasContext();
-
             if (!canvasCxt) return;
 
             const { canvas, ctx } = canvasCxt;
-            const dpr = window.devicePixelRatio || 1;
 
             let layer = layerRef.current;
             if (!layer) {
                 layer = document.createElement("canvas");
                 layerRef.current = layer;
             }
-            if (layer.width !== canvas.width || layer.height !== canvas.height) {
-                layer.width = canvas.width;
-                layer.height = canvas.height;
+            if (layer.width !== VIRTUAL_WIDTH || layer.height !== VIRTUAL_HEIGHT) {
+                layer.width = VIRTUAL_WIDTH;
+                layer.height = VIRTUAL_HEIGHT;
             }
 
             const layerCtx = layer.getContext("2d");
             if (!layerCtx) return;
 
             const grouped = new Map<number, Stroke[]>();
-
             const append = (stroke: Stroke) => {
                 const group = grouped.get(stroke.turn);
                 if (group) group.push(stroke);
@@ -83,7 +86,6 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
             };
 
             for (const stroke of strokes) append(stroke);
-
             if (activeStroke) append(activeStroke);
 
             ctx.save();
@@ -92,11 +94,14 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.restore();
 
+            const scaleX = canvas.width / VIRTUAL_WIDTH;
+            const scaleY = canvas.height / VIRTUAL_HEIGHT;
+
             for (const turn of [...grouped.keys()].sort((a, b) => a - b)) {
                 layerCtx.setTransform(1, 0, 0, 1, 0, 0);
                 layerCtx.globalCompositeOperation = "source-over";
                 layerCtx.clearRect(0, 0, layer.width, layer.height);
-                layerCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
                 layerCtx.lineCap = "round";
                 layerCtx.lineJoin = "round";
 
@@ -121,7 +126,7 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
                 layerCtx.globalCompositeOperation = "source-over";
 
                 ctx.save();
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
                 ctx.globalCompositeOperation = "source-over";
                 ctx.drawImage(layer, 0, 0);
                 ctx.restore();
@@ -151,9 +156,6 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
         canvas.style.width = `${rect.width}px`;
         canvas.style.height = `${rect.height}px`;
 
-        ctx.scale(dpr, dpr);
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
         ctx.imageSmoothingEnabled = true;
 
         const { strokes, activeStroke } = strokesRef.current;
@@ -162,10 +164,18 @@ export default function useDrawing({ canvasRef, containerRef }: UseDrawingProps)
 
     useEffect(() => {
         resizeCanvas();
-        const handleResize = () => resizeCanvas();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, [resizeCanvas]);
+
+        const container = containerRef.current;
+        const observer = container ? new ResizeObserver(resizeCanvas) : null;
+        if (observer && container) observer.observe(container);
+
+        window.addEventListener("resize", resizeCanvas);
+
+        return () => {
+            observer?.disconnect();
+            window.removeEventListener("resize", resizeCanvas);
+        };
+    }, [containerRef, resizeCanvas]);
 
     return {
         getContext,

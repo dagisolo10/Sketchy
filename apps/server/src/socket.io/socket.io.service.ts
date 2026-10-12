@@ -6,9 +6,39 @@ import { ServerData, ServerEvents } from "@package/types";
 export class SocketIoService {
     private server!: TypedServer;
     private playerSockets = new Map<string, TypedSocket>();
+    private onlinePlayers = new Map<string, number>();
 
     setServer(server: TypedServer) {
         this.server = server;
+    }
+
+    getOnlineCount() {
+        return this.onlinePlayers.size;
+    }
+
+    incrementOnline(playerId: string) {
+        const count = (this.onlinePlayers.get(playerId) ?? 0) + 1;
+
+        this.onlinePlayers.set(playerId, count);
+
+        if (count === 1) {
+            this.emit("session:online", { online: this.onlinePlayers.size });
+        }
+    }
+
+    decrementOnline(playerId: string) {
+        if (!this.onlinePlayers.has(playerId)) return this.onlinePlayers.size;
+
+        const count = (this.onlinePlayers.get(playerId) ?? 1) - 1;
+
+        if (count > 0) {
+            this.onlinePlayers.set(playerId, count);
+        } else {
+            this.onlinePlayers.delete(playerId);
+            this.emit("session:online", { online: this.onlinePlayers.size });
+        }
+
+        return;
     }
 
     emit<Event extends ServerEvents>(event: Event, ...args: ServerData<Event>) {

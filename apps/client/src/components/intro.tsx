@@ -116,25 +116,21 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
         <div id="ig-root" ref={rootRef} className="fixed inset-0 overflow-hidden select-none">
             <div id="ig-env" ref={envRef} className="absolute inset-0">
                 <div id="ig-camera" ref={cameraRef} className="absolute inset-[-6%] will-change-transform">
-                    <div id="ig-wall" className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_38%,#101318_0%,#0a0c10_20%,#06070a_48%,#020203_70%)]" />
+                    <div id="ig-wall" className="cinema-wall absolute inset-0" />
                 </div>
             </div>
 
-            <div id="ig-deep" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(0,0,0,0)_8%,rgba(0,0,0,0.72)_72%,rgba(0,0,0,0.95)_100%)] opacity-0" />
-            <div id="ig-vignette" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(0,0,0,0)_30%,rgba(0,0,0,0.42)_64%,rgba(0,0,0,0.9)_100%)]" />
+            <div id="ig-deep" className="cinema-deep pointer-events-none absolute inset-0 opacity-0" />
+            <div id="ig-vignette" className="cinema-vignette pointer-events-none absolute inset-0" />
 
             <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-                <p id="ig-narrative" ref={narrativeRef} className="m-0 mr-[-0.4em] font-light tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_74%,transparent)] uppercase opacity-0">
+                <p id="ig-narrative" ref={narrativeRef} className="text-foreground/70 font-display m-0 mr-[-0.2em] text-xl font-light tracking-[0.3em] whitespace-nowrap uppercase opacity-0 sm:text-5xl">
                     {NARRATIVE}
                 </p>
             </div>
 
             <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-                <h2
-                    id="ig-your-role"
-                    ref={yourRoleRef}
-                    className="m-0 mr-[-0.55em] text-2xl font-normal tracking-[0.55em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_94%,transparent)] uppercase opacity-0 will-change-[opacity,filter,transform]"
-                >
+                <h2 id="ig-your-role" ref={yourRoleRef} className="text-foreground/90 font-display m-0 mr-[-0.55em] text-4xl font-bold tracking-[0.5em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform] sm:text-7xl">
                     Your Role
                 </h2>
             </div>
@@ -144,10 +140,8 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
                     id="ig-role"
                     ref={roleRef}
                     className={cn(
-                        isImposter ? "text-accent-red" : "text-accent-green",
-                        isImposter ? "text-shadow-[0_0_40px_var(--accent-red-glow)]" : "text-shadow-[0_0_40px_var(--accent-green-glow)]",
-                        isImposter ? "text-shadow-[0_0_130px_rgba(255,42,109,0.24)]" : "text-shadow-[0_0_40px_rgba(5,255,161,0.24)]",
-                        "m-0 mr-[-0.5em] text-7xl leading-none font-medium tracking-[0.5em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform] sm:text-8xl",
+                        "font-display m-0 mr-[-0.3em] text-5xl leading-none font-medium tracking-[0.3em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform] sm:mr-[-0.5em] sm:text-7xl sm:tracking-[0.5em] lg:text-8xl",
+                        isImposter ? "text-danger glow-red-lg-text" : "text-success text-glow-green-lg",
                     )}
                 >
                     {role}
@@ -156,15 +150,12 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
 
             <div id="ig-layer" className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 pt-40 text-center">
                 <div id="ig-detail" className="flex flex-col items-center gap-6 text-center">
-                    <div id="ig-detail-rule" className="h-px w-37.5 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] opacity-0" />
+                    <div id="ig-detail-rule" className="cinema-rule h-px w-37.5 opacity-0" />
                     {DETAIL_A && (
                         <span
                             id="ig-detail-a"
                             ref={detailARef}
-                            className={cn(
-                                isImposter ? "mr-[-0.28em] text-sm font-light tracking-[0.28em]" : "mr-[-0.55em] font-normal tracking-[0.55em]",
-                                "m-0whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] uppercase opacity-0",
-                            )}
+                            className={cn(isImposter ? "mr-[-0.28em] font-light tracking-[0.2em]" : "mr-[-0.55em] font-normal tracking-[0.55em]", "text-foreground/70 m-0 text-sm whitespace-nowrap uppercase opacity-0 sm:text-xl")}
                         >
                             {DETAIL_A}
                         </span>
@@ -172,18 +163,25 @@ export default function IntroPage({ onComplete, secretWord, fellowImposters, rol
                     <span
                         id="ig-detail-b"
                         ref={detailBRef}
-                        className={cn(isImposter ? "mr-[-0.3em] text-2xl tracking-[0.3em]" : "mr-[-0.5em] text-7xl tracking-[0.5em]", "m-0 leading-none font-medium whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform]")}
+                        className={cn(
+                            isImposter ? "mr-[-0.2em] tracking-[0.2em]" : "mr-[-0.3em] text-4xl tracking-[0.3em]",
+                            "inline-block leading-tight select-none",
+                            "text-foreground font-display m-0 mx-auto max-w-96 leading-none font-medium uppercase opacity-0 will-change-[opacity,filter,transform] sm:max-w-max sm:text-5xl",
+                        )}
                     >
                         {DETAIL_B}
                     </span>
 
                     {DETAIL_C && (
                         <div id="ig-detail-c" ref={detailCRef} className="flex flex-col items-center gap-4 opacity-0 will-change-[opacity,filter,transform]">
-                            <span className="mr-[-0.28em] text-sm font-light tracking-[0.28em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_90%,transparent)] uppercase">{fellowLabel}</span>
+                            <span className="text-foreground/90 mr-[-0.2em] text-sm font-light tracking-[0.2em] whitespace-nowrap uppercase sm:mr-[-0.28em] sm:text-lg sm:tracking-[0.28em]">{fellowLabel}</span>
 
-                            <div className="flex gap-24">
+                            <div className="flex flex-wrap justify-center gap-4 sm:gap-16">
                                 {fellowImposters.map((name, i) => (
-                                    <div key={`${name}-${i}`} className="text-accent-red/90 m-0 mr-[-0.24em] flex items-center text-4xl leading-none font-medium tracking-[0.24em] whitespace-nowrap uppercase">
+                                    <div
+                                        key={`${name}-${i}`}
+                                        className="text-danger/90 font-display m-0 mr-[-0.16em] flex items-center text-3xl leading-none font-medium tracking-[0.16em] whitespace-nowrap uppercase sm:mr-[-0.24em] sm:text-5xl sm:tracking-[0.24em]"
+                                    >
                                         <span>{name}</span>
                                     </div>
                                 ))}

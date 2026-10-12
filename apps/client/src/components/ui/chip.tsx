@@ -5,30 +5,34 @@ interface ChipProps extends React.HTMLAttributes<HTMLButtonElement> {
     onRemove?: () => void;
     selected?: boolean;
     size?: "sm" | "md";
-    variant?: "default" | "success" | "warning" | "danger";
+    variant?: "default" | "success" | "warning" | "danger" | "info";
 }
 
 export function Chip({ selected = false, onRemove, variant = "default", size = "sm", disabled = false, className, children, ...props }: ChipProps) {
     const variants: Record<string, { base: string; active: string }> = {
         danger: {
-            active: "border-red-500/40 bg-red-500/10 text-red-400",
-            base: "border-red-500/15 text-foreground/40 hover:border-red-500/30 hover:text-red-400/70",
+            active: "border-danger/50 bg-danger/10 text-danger",
+            base: "border-danger/20 text-muted-foreground hover:border-danger/40 hover:text-danger",
         },
         default: {
-            active: "border-primary/40 bg-primary/10 text-primary shadow-[0_0_6px_rgba(var(--primary-rgb,0,180,255),0.1)]",
-            base: "border-primary/15 text-foreground/40 hover:border-primary/30 hover:text-foreground/60",
+            active: "border-border bg-muted text-foreground",
+            base: "border-border/60 text-muted-foreground hover:border-border hover:text-foreground",
         },
         success: {
-            active: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
-            base: "border-emerald-500/15 text-foreground/40 hover:border-emerald-500/30 hover:text-emerald-400/70",
+            active: "border-success/50 bg-success/10 text-success",
+            base: "border-success/20 text-muted-foreground hover:border-success/40 hover:text-success",
         },
         warning: {
-            active: "border-amber-500/40 bg-amber-500/10 text-amber-400",
-            base: "border-amber-500/15 text-foreground/40 hover:border-amber-500/30 hover:text-amber-400/70",
+            active: "border-warning/50 bg-warning/10 text-warning",
+            base: "border-warning/20 text-muted-foreground hover:border-warning/40 hover:text-warning",
+        },
+        info: {
+            active: "border-info/50 bg-info/10 text-info",
+            base: "border-info/20 text-muted-foreground hover:border-info/40 hover:text-info",
         },
     };
 
-    const v = variants[variant];
+    const v = variants[variant] ?? variants["default"];
 
     return (
         <button
@@ -36,8 +40,8 @@ export function Chip({ selected = false, onRemove, variant = "default", size = "
             disabled={disabled}
             data-slot="tron-chip"
             className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border  tracking-widest uppercase transition-all",
-                size === "sm" ? "px-2.5 py-0.5 text-[8px]" : "px-3 py-1 text-[9px]",
+                "border-line inline-flex shrink-0 items-center gap-1.5 font-mono rounded-[min(var(--radius-sm),6px)] tracking-widest uppercase transition-all select-none",
+                size === "sm" ? "px-2 py-0.5 text-[9px]" : "px-3 py-1 text-[10px]",
                 disabled && "cursor-not-allowed opacity-40",
                 selected ? v.active : v.base,
                 className,

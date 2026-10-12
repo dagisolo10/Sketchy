@@ -1,4 +1,4 @@
-import { WORDS } from "@/game/game.data.js";
+import { PLAYER_COLORS, WORDS } from "@/game/game.data.js";
 import { SocketIoService } from "@/socket.io/socket.io.service.js";
 import { Injectable } from "@nestjs/common";
 import { COUNTER_START_TIME, DrawingState, Game, GamePlayer, GameWinner, Room, Stroke, Vote, VOTING_DURATION, VotingState } from "@package/types";
@@ -19,7 +19,8 @@ export class GameStateService {
     private roomCountdownTimerMap = new Map<string, NodeJS.Timeout | null>();
 
     prepareGame(room: Room) {
-        const players: GamePlayer[] = random.shuffle(room.players).map((p) => ({ ...p, color: this.generateColor(), eliminated: false }));
+        const takenColors = new Set<string>();
+        const players: GamePlayer[] = random.shuffle(room.players).map((p) => ({ ...p, color: this.generateColor(takenColors), eliminated: false }));
 
         const imposters = random.shuffle([...players]).slice(0, room.settings.imposters);
 
@@ -113,7 +114,6 @@ export class GameStateService {
 
         if (alivePlayers.length === 0) return;
 
-        // Full round complete: every alive player has drawn once.
         if (drawingState.turn + 1 >= alivePlayers.length) {
             this.finalizeStrokes(roomId, drawingState);
             this.clearTimers(roomId);
@@ -451,9 +451,19 @@ export class GameStateService {
         }
     }
 
-    private generateColor() {
-        return `#${Math.floor(Math.random() * 0xffffff)
-            .toString(16)
-            .padStart(6, "0")}`;
+    private generateColor(taken: Set<string>) {
+        if (taken.size >= PLAYER_COLORS.length) {
+            return PLAYER_COLORS[random.int(0, PLAYER_COLORS.length - 1)];
+        }
+
+        let color: string;
+
+        do {
+            color = PLAYER_COLORS[random.int(0, PLAYER_COLORS.length - 1)];
+        } while (taken.has(color));
+
+        taken.add(color);
+
+        return color;
     }
 }

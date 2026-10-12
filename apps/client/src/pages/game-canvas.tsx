@@ -1,6 +1,8 @@
 import DrawingBoard from "@/components/drawing-board";
+import GameError from "@/components/errors/game-error";
 import GameOver from "@/components/game-over";
 import GameShell from "@/components/game-shell";
+import GameSkeleton from "@/components/skeletons/game-skeleton";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Countdown } from "@/components/ui/countdown";
@@ -14,19 +16,20 @@ import { useGetOrCreateSession } from "@/hooks/tan-stack/session";
 import { getInitials } from "@/utils/helpers";
 import { type DrawingState, type Game, type GameWinner, type Room } from "@package/types";
 import { cn } from "cn";
-import { LogOut, Paintbrush } from "lucide-react";
+import { LogOut, Paintbrush, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 
-import NotFound from "./not-found";
-
 export default function GameCanvasLayout() {
     const { roomId = "" } = useParams<{ roomId: string }>();
+    const { data: room, isPending, error, refetch, isFetching } = useGetRoom(roomId);
 
-    const { data: room } = useGetRoom(roomId);
+    if (isPending) {
+        return <GameSkeleton />;
+    }
 
-    if (!room) {
-        return <NotFound />;
+    if (error) {
+        return <GameError error={error} onRetry={() => refetch()} retrying={isFetching} />;
     }
 
     return <GameCanvasPage room={room} />;
@@ -34,7 +37,6 @@ export default function GameCanvasLayout() {
 
 function GameCanvasPage({ room }: { room: Room }) {
     const roomId = room.roomId;
-
     const { socket } = useSocket();
     const { data: player } = useGetOrCreateSession();
 
@@ -45,6 +47,8 @@ function GameCanvasPage({ room }: { room: Room }) {
     const [drawingState, setDrawingState] = useState<DrawingState | null>(null);
     const [winner, setWinner] = useState<GameWinner | null>(null);
     const [secretWord, setSecretWord] = useState<string>("");
+
+    const [mobileTab, setMobileTab] = useState<"canvas" | "players">("canvas");
 
     const isImposter = !!game && !!player && game.imposters.some(({ playerId }) => playerId === player?.playerId);
     const isEliminated = !!game && !!player && !!game.players.find(({ playerId }) => playerId === player?.playerId)?.eliminated;
@@ -115,124 +119,127 @@ function GameCanvasPage({ room }: { room: Room }) {
         <GameShell
             trailing={
                 <Link to={`/room/${roomId}`}>
-                    <Button variant="outline" size="lg" className="hover:text-primary gap-4 px-4 font-bold tracking-widest uppercase">
-                        <LogOut className="size-4" />
-                        LEAVE GAME
+                    <Button variant="outline" size="sm" className="w-full gap-2 px-3 font-mono text-xs font-bold tracking-widest uppercase md:w-auto">
+                        <LogOut className="size-3.5" />
+                        LEAVE
                     </Button>
                 </Link>
             }
         >
-            <section>
-                <div className="bg-card/70 mb-4 flex flex-wrap items-center justify-between gap-3 border border-slate-800 px-4 py-3 sm:px-5">
-                    <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">ROOM</span>
-                        <span className="text-primary text-glow text-lg font-black tracking-[0.3em] sm:text-xl">{roomId}</span>
+            <section className="space-y-4">
+                <div className="border-line border-border bg-card/70 shadow-nb flex items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase sm:text-xs">ROOM</span>
+                        <span className="text-primary-ink text-glow font-display text-base font-black tracking-[0.2em] sm:text-xl">{roomId}</span>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <span className="text-primary text-xs font-bold tracking-widest uppercase">SKETCHY</span>
-                        <span className="bg-primary/20 border-primary/40 text-primary border px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase">IN GAME</span>
+                    <div className="flex items-center gap-2">
+                        <span className="border-primary/40 bg-primary/20 text-primary-ink border-line rounded-xs px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest uppercase">IN GAME</span>
                     </div>
                 </div>
 
+                <div className="border-border bg-card shadow-nb-xs flex rounded-md border p-1 lg:hidden">
+                    <button
+                        type="button"
+                        onClick={() => setMobileTab("canvas")}
+                        className={cn(
+                            "flex flex-1 items-center justify-center gap-2 rounded-xs py-2 font-mono text-xs font-bold uppercase transition-all",
+                            mobileTab === "canvas" ? "bg-primary text-primary-foreground shadow-nb-xs" : "text-muted-foreground",
+                        )}
+                    >
+                        <Paintbrush className="size-3.5" />
+                        Canvas
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setMobileTab("players")}
+                        className={cn(
+                            "flex flex-1 items-center justify-center gap-2 rounded-xs py-2 font-mono text-xs font-bold uppercase transition-all",
+                            mobileTab === "players" ? "bg-primary text-primary-foreground shadow-nb-xs" : "text-muted-foreground",
+                        )}
+                    >
+                        <Users className="size-3.5" />
+                        Players ({game?.players.length ?? 0})
+                    </button>
+                </div>
+
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-                    <div className="hud-box bg-card col-span-1 flex flex-col overflow-hidden border border-slate-800 lg:col-span-3">
-                        <div className="bg-card/60 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 px-4 py-3">
-                            <div className="flex items-center gap-3">
-                                <Paintbrush className="text-primary size-5" />
-                                <Countdown label="ACTIVE DRAWER" value={game?.activePlayer.name ?? "..."} variant="danger" />
+                    <div className={cn("hud-box border-line border-border bg-card shadow-nb col-span-1 flex flex-col overflow-hidden lg:col-span-3", mobileTab === "canvas" ? "block" : "hidden lg:flex")}>
+                        <div className="border-border/60 grid grid-cols-2 gap-3 border-b p-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:p-4">
+                            <div className="border-border/40 col-span-2 flex flex-wrap items-center justify-between gap-2 border-t pt-2 sm:col-span-1 sm:border-0 sm:pt-0">
+                                <div className="flex items-center gap-2">
+                                    <Paintbrush className="text-primary-ink size-4 shrink-0 sm:size-5" />
+                                    <Countdown label="DRAWER" value={game?.activePlayer.name ?? "..."} />
+                                </div>
+
+                                <Countdown label="TIME" value={game ? `00:${game.remaining.toString().padStart(2, "0")}` : "00:--"} variant="warning" />
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-4">
-                                {game ? (
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-foreground/80 text-sm tracking-widest uppercase">Your role</span>
-                                        <span
-                                            className={cn(
-                                                "rounded border px-3 py-1 text-lg font-bold tracking-wider",
-                                                isImposter ? "border-accent-red/50 bg-accent-red/20 text-accent-red glow-red" : "border-accent-green/50 bg-accent-green/20 text-accent-green glow-green",
-                                            )}
-                                        >
-                                            {isImposter ? "IMPOSTER" : "CIVILIAN"}
-                                        </span>
-                                    </div>
-                                ) : null}
-
-                                {game && !isImposter ? (
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-foreground/80 text-sm tracking-widest uppercase">Secret word</span>
-                                        <span className="text-accent-green text-glow-green text-lg font-bold tracking-widest uppercase">{game.secretWord}</span>
-                                    </div>
-                                ) : null}
-                            </div>
-
-                            <div className="flex items-center gap-4">
+                            <div className="border-border/40 col-span-2 flex flex-wrap items-center justify-between gap-2 border-t pt-2 sm:col-span-1 sm:border-0 sm:pt-0">
                                 <Countdown label="ROUND" value={game?.round.toString() ?? "1"} variant="danger" />
-                                <Countdown label="TIME LEFT" value={game ? `00:${game.remaining.toString().padStart(2, "0")}` : "00:--"} variant="warning" />
+                                {game && <Countdown label="ROLE" value={isImposter ? "IMPOSTER" : "CIVILIAN"} />}
+                                {game && !isImposter && <Countdown textClassName="uppercase" label="WORD" value={game.secretWord} variant="success" />}
                             </div>
                         </div>
 
-                        <div className="flex h-120 min-h-95 flex-col lg:h-150">
+                        <div className="flex h-[55vh] min-h-90 flex-col sm:h-[65vh] lg:h-[calc(100vh-280px)]">
                             <DrawingBoard myTurn={myTurn} roomId={roomId} drawingState={drawingState} setDrawingState={setDrawingState} />
                         </div>
                     </div>
 
-                    <aside className="col-span-1 space-y-4">
+                    <aside className={cn("col-span-1 space-y-4", mobileTab === "players" ? "block" : "hidden lg:block")}>
                         {game && isImposter ? (
-                            <div className="bg-card border-accent-red/40 border p-4">
+                            <div className="border-line border-danger/40 bg-card shadow-nb p-4">
                                 <div className="mb-3 flex items-center gap-2">
-                                    <span className="text-accent-red glow-red size-1.5 rounded-full bg-current" />
-                                    <span className="text-accent-red text-xs font-bold tracking-widest uppercase">Your fellow imposters</span>
+                                    <span className="text-danger size-2 animate-pulse rounded-full bg-current" />
+                                    <span className="text-danger font-mono text-xs font-bold tracking-widest uppercase">Fellow Imposters</span>
                                 </div>
                                 <div className="space-y-2">
                                     {game.imposters
                                         .filter(({ playerId }) => playerId !== player?.playerId)
                                         .map((p) => (
-                                            <div key={p.playerId} className="bg-accent-red/5 border-accent-red/20 flex items-center justify-between border px-3 py-2">
+                                            <div key={p.playerId} className="bg-danger/5 border-danger/20 flex items-center justify-between border px-3 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="bg-accent-red/20 text-accent-red border-accent-red/40 flex size-7 items-center justify-center border text-[10px] font-black">{getInitials(p.name)}</div>
-                                                    <span className="text-accent-red text-xs font-bold tracking-wide uppercase">{p.name}</span>
+                                                    <div className="border-danger/40 bg-danger/20 text-danger flex size-7 items-center justify-center border font-mono text-[10px] font-black">{getInitials(p.name)}</div>
+                                                    <span className="text-danger font-mono text-sm font-bold tracking-wide uppercase">{p.name}</span>
                                                 </div>
                                             </div>
                                         ))}
                                 </div>
-                                <p className="mt-3 text-xs leading-relaxed text-slate-500">{game.imposters.length > 1 ? "Stay quiet. They are the only ones you can trust." : "You are alone. Bluff hard and find the word."}</p>
+                                <p className="text-muted-foreground mt-3 font-sans text-xs leading-relaxed">{game.imposters.length > 1 ? "Stay quiet. They are the only ones you can trust." : "You are alone. Bluff hard and find the word."}</p>
                             </div>
                         ) : null}
 
-                        <div className="bg-card border border-slate-800 p-4">
-                            <div className="mb-3 text-xs font-bold tracking-widest text-slate-400 uppercase">PLAYERS</div>
-                            <div className="space-y-2">
-                                {game?.players.map((p) => {
-                                    const drawing = p.playerId === game?.activePlayer.playerId;
-                                    const eliminated = p.eliminated;
+                        {game?.players.map((p) => {
+                            const drawing = p.playerId === game?.activePlayer.playerId;
+                            const eliminated = p.eliminated;
 
-                                    return (
-                                        <div key={p.name} className={cn("bg-background/40 flex items-center justify-between border px-3 py-2", eliminated ? "border-accent-red/30 opacity-60" : "border-slate-800")}>
-                                            <div className="flex items-center gap-2">
-                                                <div
-                                                    className={cn(
-                                                        "flex size-7 items-center justify-center border text-[10px] font-black",
-                                                        eliminated ? "border-accent-red/40 bg-accent-red/10 text-accent-red/70" : drawing ? "border-primary/60 bg-primary/10 text-primary" : "bg-background/60 border-slate-700 text-slate-400",
-                                                    )}
-                                                >
-                                                    {getInitials(p.name)}
-                                                </div>
-                                                <span className={cn("text-xs font-bold tracking-wide uppercase", eliminated ? "text-accent-red/70 line-through" : drawing ? "text-primary" : "text-slate-300")}>{p.name}</span>
-                                            </div>
-                                            <Chip variant={eliminated ? "danger" : "default"} selected={drawing && !eliminated} size="sm">
-                                                {eliminated ? "ELIMINATED" : drawing ? "DRAWING" : "GUESSING"}
-                                            </Chip>
+                            return (
+                                <div key={p.name} className={cn("border-line flex items-center justify-between border px-3 py-2 transition-all", eliminated ? "border-danger/30 bg-danger/5 opacity-60" : "border-border bg-background/40")}>
+                                    <div className="flex items-center gap-2.5 truncate">
+                                        <div
+                                            className={cn(
+                                                "flex size-7 shrink-0 items-center justify-center border font-mono text-[10px] font-black",
+                                                eliminated ? "border-danger/40 bg-danger/10 text-danger/70" : drawing ? "border-primary/60 bg-primary/10 text-primary-ink" : "border-border/70 bg-background/60 text-muted-foreground",
+                                            )}
+                                        >
+                                            {getInitials(p.name)}
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
 
-                        <div className="bg-card border border-slate-800 p-4">
-                            <div className="mb-2 text-xs font-bold tracking-widest text-slate-400 uppercase">DRAWING TOOLS</div>
-                            <p className="text-xs text-slate-500">Pen, Eraser, Sizes, Undo, Redo, Clear are built into the canvas toolbar.</p>
-                        </div>
+                                        <div className="flex items-center gap-2 truncate">
+                                            <span className={cn("truncate font-mono text-sm font-bold tracking-wide uppercase", eliminated ? "text-danger/70 line-through" : drawing ? "text-primary-ink" : "text-foreground/80")}>{p.name}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <Chip variant={eliminated ? "danger" : "default"} selected={drawing && !eliminated} size="sm" className="shrink-0 font-mono text-[10px]">
+                                            {eliminated ? "ELIMINATED" : drawing ? "DRAWING" : "GUESSING"}
+                                        </Chip>
+                                        {p.color && !eliminated && <span className="border-border shadow-nb-xs size-2.5 shrink-0 rounded-full border" style={{ backgroundColor: p.color }} title={`Color: ${p.color}`} />}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </aside>
                 </div>
             </section>

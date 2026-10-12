@@ -1,0 +1,32 @@
+export const ErrorCode = {
+    NOT_IN_SESSION: "NOT_IN_SESSION",
+    SESSION_MISSING: "SESSION_MISSING",
+    SESSION_INACTIVE: "SESSION_INACTIVE",
+
+    NOT_HOST: "NOT_HOST",
+    ROOM_FULL: "ROOM_FULL",
+    NOT_IN_ROOM: "NOT_IN_ROOM",
+    ROOM_NOT_FOUND: "ROOM_NOT_FOUND",
+
+    PLAYERS_NOT_READY: "PLAYERS_NOT_READY",
+    NOT_ENOUGH_PLAYERS: "NOT_ENOUGH_PLAYERS",
+    TOO_MANY_IMPOSTERS: "TOO_MANY_IMPOSTERS",
+    GAME_ALREADY_STARTED: "GAME_ALREADY_STARTED",
+    GAME_ALREADY_STARTING: "GAME_ALREADY_STARTING",
+
+    NOT_FOUND: "NOT_FOUND",
+    FORBIDDEN: "FORBIDDEN",
+    BAD_REQUEST: "BAD_REQUEST",
+    UNAUTHORIZED: "UNAUTHORIZED",
+    INTERNAL_ERROR: "INTERNAL_ERROR",
+    VALIDATION_FAILED: "VALIDATION_FAILED",
+} as const;
+
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
+
+export interface ApiErrorResponse {
+    statusCode: number;
+    code: ErrorCode | string;
+    message: string;
+    error: string;
+}

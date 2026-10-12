@@ -37,14 +37,14 @@ export function NumberInput({
 
     return (
         <div data-slot="tron-number-input" className={cn("space-y-1", disabled && "opacity-40", className)} {...props}>
-            {label ? <span className="text-foreground/40 block font-mono text-[9px] tracking-widest uppercase">{label}</span> : null}
+            {label ? <span className="text-muted-foreground block font-mono text-[9px] tracking-widest uppercase">{label}</span> : null}
 
-            <div className="border-primary/20 bg-card/60 inline-flex items-stretch rounded border backdrop-blur-sm">
+            <div className="border-line border-border bg-card inline-flex items-stretch rounded-[min(var(--radius-md),8px)] shadow-nb-xs">
                 <button
                     type="button"
                     disabled={disabled || current <= min}
                     onClick={() => update(current - step)}
-                    className="border-primary/15 text-foreground/30 hover:bg-primary/10 hover:text-primary flex w-8 items-center justify-center border-r transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+                    className="border-border text-muted-foreground hover:bg-primary/10 hover:text-primary-ink flex w-8 items-center justify-center border-r transition-colors disabled:cursor-not-allowed disabled:opacity-30"
                 >
                     <svg aria-hidden="true" width="8" height="2" viewBox="0 0 8 2" fill="none">
                         <path d="M0 1h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -62,14 +62,14 @@ export function NumberInput({
                             update(v);
                         }
                     }}
-                    className="text-foreground/70 w-12 bg-transparent py-1.5 text-center font-mono text-xs tabular-nums outline-none"
+                    className="text-foreground w-12 bg-transparent py-1.5 text-center font-mono text-xs font-bold tabular-nums outline-none"
                 />
 
                 <button
                     type="button"
                     disabled={disabled || current >= max}
                     onClick={() => update(current + step)}
-                    className="border-primary/15 text-foreground/30 hover:bg-primary/10 hover:text-primary flex w-8 items-center justify-center border-l transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+                    className="border-border text-muted-foreground hover:bg-primary/10 hover:text-primary-ink flex w-8 items-center justify-center border-l transition-colors disabled:cursor-not-allowed disabled:opacity-30"
                 >
                     <svg aria-hidden="true" width="8" height="8" viewBox="0 0 8 8" fill="none">
                         <path d="M0 4h8M4 0v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

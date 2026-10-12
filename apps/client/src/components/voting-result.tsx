@@ -86,47 +86,41 @@ export default function VotingResult({ result, onComplete }: { result: Eliminate
     const isRed = eliminated?.role === "imposter";
     const detail = eliminated ? `${eliminated.name} was an ${eliminated.role.toUpperCase()}` : "The imposter is still hiding among you. Stay sharp.";
 
-    const verdictStyle = eliminated
-        ? isRed
-            ? "text-accent-red text-shadow-[0_0_40px_var(--accent-red-glow)]"
-            : "text-accent-green text-shadow-[0_0_40px_var(--accent-green-glow)]"
-        : "text-accent-amber text-shadow-[0_0_40px_var(--accent-amber-glow)]";
+    const verdictStyle = eliminated ? (isRed ? "text-danger glow-red-lg-text" : "text-success text-glow-green-lg") : "text-warning text-glow-amber-lg";
 
     return (
         <div id="vr-root" ref={rootRef} className="fixed inset-0 z-90 overflow-hidden select-none">
             <div id="vr-env" ref={envRef} className="absolute inset-0">
                 <div id="vr-camera" ref={cameraRef} className="absolute inset-[-6%] will-change-transform">
-                    <div id="vr-wall" className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_38%,#101318_0%,#0a0c10_20%,#06070a_48%,#020203_70%)]" />
+                    <div id="vr-wall" className="cinema-wall absolute inset-0" />
                 </div>
             </div>
 
-            <div id="vr-deep" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(0,0,0,0)_8%,rgba(0,0,0,0.72)_72%,rgba(0,0,0,0.95)_100%)] opacity-0" />
-            <div id="vr-vignette" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(0,0,0,0)_30%,rgba(0,0,0,0.42)_64%,rgba(0,0,0,0.9)_100%)]" />
+            <div id="vr-deep" className="cinema-deep pointer-events-none absolute inset-0 opacity-0" />
+            <div id="vr-vignette" className="cinema-vignette pointer-events-none absolute inset-0" />
 
-            {eliminated ? (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-                    <p ref={narrativeRef} className="m-0 mr-[-0.4em] text-2xl font-light tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_74%,transparent)] uppercase opacity-0">
-                        The vote is in
-                    </p>
-                </div>
-            ) : (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-                    <p ref={narrativeRef} className="m-0 mr-[-0.3em] text-2xl font-light tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_74%,transparent)] uppercase opacity-0">
-                        The vote is in
-                    </p>
-                </div>
-            )}
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
+                <p ref={narrativeRef} className="text-foreground/70 font-display m-0 mr-[-0.4em] text-2xl font-light tracking-[0.3em] whitespace-nowrap uppercase opacity-0 sm:text-5xl">
+                    The vote is in
+                </p>
+            </div>
 
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 pb-20 text-center">
                 <div className="flex flex-col items-center">
-                    <h1 ref={verdictRef} className={cn(verdictStyle, "m-0 mr-[-0.2em] text-7xl leading-none font-black tracking-[0.2em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform]")}>
+                    <h1
+                        ref={verdictRef}
+                        className={cn(
+                            verdictStyle,
+                            "font-display m-0 mr-[-0.12em] text-4xl leading-none font-black tracking-[0.12em] uppercase opacity-0 will-change-[opacity,filter,transform] sm:mr-[-0.2em] sm:text-6xl sm:tracking-[0.2em] lg:text-8xl",
+                        )}
+                    >
                         {eliminated ? "Eliminated" : verdict}
                     </h1>
 
                     {eliminated ? (
                         <h2
                             ref={nameRef}
-                            className="m-0 mt-4 mr-[-0.3em] text-[40px] leading-none font-bold tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_96%,transparent)] uppercase opacity-0 will-change-[opacity,filter,transform]"
+                            className="text-foreground/95 font-display m-0 mt-4 mr-[-0.16em] text-3xl leading-none font-bold tracking-[0.16em] uppercase opacity-0 will-change-[opacity,filter,transform] sm:mr-[-0.3em] sm:text-[40px] sm:tracking-[0.3em]"
                         >
                             {verdict}
                         </h2>
@@ -136,8 +130,8 @@ export default function VotingResult({ result, onComplete }: { result: Eliminate
 
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 pt-40 text-center">
                 <div className="flex flex-col items-center gap-7">
-                    <div id="vr-rule" ref={ruleRef} className="h-px w-37.5 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] opacity-0" />
-                    <span ref={detailRef} className={cn("m-0 mr-[-0.28em] text-2xl font-light tracking-[0.28em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] uppercase opacity-0")}>
+                    <div id="vr-rule" ref={ruleRef} className="cinema-rule h-px w-37.5 opacity-0" />
+                    <span ref={detailRef} className="text-foreground/70 m-0 text-base font-light tracking-[0.18em] uppercase opacity-0 sm:mr-[-0.28em] sm:text-xl sm:tracking-[0.28em]">
                         {detail}
                     </span>
                 </div>

@@ -1,11 +1,11 @@
-import type { Player, PlayerReadyPayload, Room, RoomSettings } from "@package/types";
-import type { TMutationOptions, TQueryOptions } from "@/types/options";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { api, requestApi } from "@/lib/axios";
-
+import type { TMutationOptions, TQueryOptions } from "@/types/options";
+import type { Player, PlayerReadyPayload, Room, RoomSettings } from "@package/types";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function useGetRoom<Data = Room>(roomId: string, options?: TQueryOptions<Data>) {
     return useQuery({
+        retry: (failureCount, error) => failureCount < 2 && (error.status === undefined || error.status >= 500),
         ...options,
         queryKey: ["room", roomId],
         queryFn: async () => requestApi(() => api.get<Data>(`/room/${roomId}`)),
@@ -65,10 +65,3 @@ export function useStartGame(options?: TMutationOptions<Room, { roomId: string }
         onSuccess: (...args) => options?.onSuccess && options.onSuccess(...args),
     });
 }
-
-// export function useDeleteRoom<Data = void>(options?: TMutationOptions<Data, { roomId: string }>) {
-//     return useMutation({
-//         ...options,
-//         mutationFn: async ({ roomId }) => requestApi(() => api.delete<Data>("/room/" + roomId)),
-//     });
-// }

@@ -35,7 +35,6 @@ export default function VotingIntro({ onComplete }: { onComplete: () => void }) 
             gsap.set(ruleRef.current, { scaleX: 0 });
 
             const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-            // tl.timeScale(3);
 
             tl.addLabel("vote-room", 0.15).to("#vi-wall", { opacity: 1, duration: 1, ease: "sine.inOut" }, "vote-room").to(cameraRef.current, { scale: 1.22, duration: 12, ease: "none" }, "vote-room");
 
@@ -74,15 +73,15 @@ export default function VotingIntro({ onComplete }: { onComplete: () => void }) 
         <div id="vi-root" ref={rootRef} className="fixed inset-0 z-90 overflow-hidden select-none">
             <div id="vi-env" ref={envRef} className="absolute inset-0">
                 <div id="vi-camera" ref={cameraRef} className="absolute inset-[-6%] will-change-transform">
-                    <div id="vi-wall" className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_38%,#101318_0%,#0a0c10_20%,#06070a_48%,#020203_70%)]" />
+                    <div id="vi-wall" className="cinema-wall absolute inset-0" />
                 </div>
             </div>
 
-            <div id="vi-deep" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(0,0,0,0)_8%,rgba(0,0,0,0.72)_72%,rgba(0,0,0,0.95)_100%)] opacity-0" />
-            <div id="vi-vignette" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(0,0,0,0)_30%,rgba(0,0,0,0.42)_64%,rgba(0,0,0,0.9)_100%)]" />
+            <div id="vi-deep" className="cinema-deep pointer-events-none absolute inset-0 opacity-0" />
+            <div id="vi-vignette" className="cinema-vignette pointer-events-none absolute inset-0" />
 
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center">
-                <p ref={narrativeRef} className="m-0 text-2xl font-light tracking-[0.3em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_74%,transparent)] uppercase opacity-0">
+                <p ref={narrativeRef} className="text-foreground/70 font-display m-0 text-lg font-light tracking-[0.3em] uppercase opacity-0 sm:text-5xl sm:tracking-[0.3em]">
                     Every stroke was a clue.
                 </p>
             </div>
@@ -91,13 +90,13 @@ export default function VotingIntro({ onComplete }: { onComplete: () => void }) 
                 <div className="flex flex-col items-center">
                     <h1
                         ref={revealRef}
-                        className="m-0 mr-[-0.2em] text-7xl leading-none font-medium tracking-[0.2em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_96%,transparent)] uppercase opacity-0 will-change-[opacity,filter,transform]"
+                        className="font-display text-foreground/95 m-0 mr-[-0.12em] text-3xl leading-none font-medium tracking-[0.5em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform] sm:mr-[-0.2em] sm:text-7xl"
                     >
                         Vote out the
                     </h1>
                     <h1
                         ref={highlightRef}
-                        className="text-accent-red m-0 mt-2 mr-[-0.2em] text-7xl leading-none font-bold tracking-[0.2em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform] text-shadow-[0_0_40px_var(--accent-red-glow)]"
+                        className="font-display text-danger glow-red-lg-text m-0 mt-2 mr-[-0.12em] text-3xl leading-none font-bold tracking-[0.3em] whitespace-nowrap uppercase opacity-0 will-change-[opacity,filter,transform] sm:mr-[-0.2em] sm:text-7xl sm:tracking-[0.5em] lg:text-8xl"
                     >
                         Imposter
                     </h1>
@@ -106,8 +105,8 @@ export default function VotingIntro({ onComplete }: { onComplete: () => void }) 
 
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 pt-24 text-center">
                 <div className="flex flex-col items-center gap-6">
-                    <div id="vi-rule" ref={ruleRef} className="h-px w-37.5 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] opacity-0" />
-                    <span ref={hintRef} className={cn("m-0 mr-[-0.28em] text-sm font-light tracking-[0.28em] whitespace-nowrap text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] uppercase opacity-0")}>
+                    <div id="vi-rule" ref={ruleRef} className="cinema-rule h-px w-37.5 opacity-0" />
+                    <span ref={hintRef} className={cn("text-foreground/70 m-0 text-base font-light tracking-[0.2em] uppercase opacity-0 sm:text-lg sm:tracking-[0.28em]")}>
                         Someone was guessing.
                     </span>
                 </div>

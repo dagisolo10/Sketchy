@@ -1,13 +1,13 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
-import { COUNTER_START_TIME, MIN_PLAYERS, RoomSettings } from "@package/types";
-import { SocketIoService } from "@/socket.io/socket.io.service.js";
+import { AppError } from "@/common/errors.js";
 import { GameStateService } from "@/game/game.state.service.js";
-import { SessionService } from "@/session/session.service.js";
-import { SessionContext } from "@/session/session.context.js";
 import { UpdateRoomSettingsDto } from "@/room/room.dto.js";
 import { RoomStore } from "@/room/room.store.js";
+import { SessionContext } from "@/session/session.context.js";
+import { SessionService } from "@/session/session.service.js";
+import { SocketIoService } from "@/socket.io/socket.io.service.js";
+import { HttpStatus, Injectable } from "@nestjs/common";
+import { COUNTER_START_TIME, ErrorCode, MIN_PLAYERS, RoomSettings } from "@package/types";
 import { ulid } from "ulid";
-
 
 @Injectable()
 export class RoomService {
@@ -42,7 +42,7 @@ export class RoomService {
         const player = this.sessionService.getPlayerBySession(sessionId);
 
         if (!player) {
-            throw new UnauthorizedException("You are not in the session");
+            throw new AppError(ErrorCode.NOT_IN_SESSION, HttpStatus.UNAUTHORIZED, "You're not in an active session. Please refresh the page and try again.");
         }
 
         let roomId: string;
@@ -66,7 +66,7 @@ export class RoomService {
         const { player, room } = this.validateRoom(roomId);
 
         if (room.hostId !== player.playerId) {
-            throw new ForbiddenException("You are not allowed to edit room settings");
+            throw new AppError(ErrorCode.NOT_HOST, HttpStatus.FORBIDDEN, "Only the room host can change the room settings.");
         }
 
         room.settings = settings;
@@ -84,12 +84,22 @@ export class RoomService {
         }
 
         if (room.players.length >= room.settings.maxPlayers) {
-            throw new ForbiddenException("Room is full");
+            throw new AppError(ErrorCode.ROOM_FULL, HttpStatus.FORBIDDEN, "This room is full right now. Ask the host to raise the player limit or join another room.");
         }
 
         room.players.push({ ...player, ready: false });
 
         this.socketIoService.emitTo("player:joined", roomId, { player: { ...player, ready: false } });
+
+        if (!this.socketIoService.getPlayerSocket(room.hostId)) {
+            const nextHost = room.players.find((p) => p.playerId !== room.hostId);
+
+            if (nextHost) {
+                room.hostId = nextHost.playerId;
+
+                this.socketIoService.emitTo("room:host:changed", roomId, { newHostId: room.hostId });
+            }
+        }
 
         return room;
     }
@@ -106,13 +116,19 @@ export class RoomService {
         }
 
         this.socketIoService.emitTo("player:left:room", roomId, { playerId: player.playerId });
+
+        const newHostId = this.roomStore.transferHost(roomId, player.playerId);
+
+        if (newHostId) {
+            this.socketIoService.emitTo("room:host:changed", roomId, { newHostId });
+        }
     }
 
     deleteRoom(roomId: string) {
         const { player, room } = this.validateRoom(roomId);
 
         if (room.hostId !== player.playerId) {
-            throw new ForbiddenException("You are not allowed to delete the room");
+            throw new AppError(ErrorCode.NOT_HOST, HttpStatus.FORBIDDEN, "Only the room host can close this room.");
         }
 
         this.roomStore.removeRoom(roomId);
@@ -126,7 +142,7 @@ export class RoomService {
         const roomPlayer = room.players.find((roomPlayer) => roomPlayer.playerId === player.playerId);
 
         if (!roomPlayer) {
-            throw new BadRequestException("You are not in the room");
+            throw new AppError(ErrorCode.NOT_IN_ROOM, HttpStatus.BAD_REQUEST, "You're no longer part of this room. Rejoin to continue.");
         }
 
         roomPlayer.ready = ready;
@@ -138,27 +154,27 @@ export class RoomService {
         const { player, room } = this.validateRoom(roomId);
 
         if (room.hostId !== player.playerId) {
-            throw new ForbiddenException("You are not allowed to start the game");
+            throw new AppError(ErrorCode.NOT_HOST, HttpStatus.FORBIDDEN, "Only the room host can start the game.");
         }
 
         if (room.status === "starting") {
-            throw new BadRequestException("Game is already starting");
+            throw new AppError(ErrorCode.GAME_ALREADY_STARTING, HttpStatus.BAD_REQUEST, "The game is already starting. Hang tight!");
         }
 
         if (room.status === "playing") {
-            throw new BadRequestException("Game is already started");
+            throw new AppError(ErrorCode.GAME_ALREADY_STARTED, HttpStatus.BAD_REQUEST, "This game has already started.");
         }
 
         if (room.players.length < MIN_PLAYERS) {
-            throw new BadRequestException(`At least ${MIN_PLAYERS} players are required`);
+            throw new AppError(ErrorCode.NOT_ENOUGH_PLAYERS, HttpStatus.BAD_REQUEST, `You need at least ${MIN_PLAYERS} players to start. Invite a few more friends.`);
         }
 
-        if (room.settings.imposters > Math.min(1, Math.floor(room.players.length / 4))) {
-            throw new BadRequestException(`Too many imposters for ${room.players.length} players`);
+        if (room.settings.imposters > Math.min(1, Math.floor(room.players.length / 3))) {
+            throw new AppError(ErrorCode.TOO_MANY_IMPOSTERS, HttpStatus.BAD_REQUEST, `That's too many imposters for ${room.players.length} players. Lower the imposter count and try again.`);
         }
 
         if (!room.players.every(({ ready }) => ready)) {
-            throw new BadRequestException("Not all players are ready");
+            throw new AppError(ErrorCode.PLAYERS_NOT_READY, HttpStatus.BAD_REQUEST, "Everyone needs to be ready before the game can start.");
         }
 
         room.status = "starting";
@@ -198,13 +214,13 @@ export class RoomService {
         const player = this.sessionService.getPlayerBySession(sessionId);
 
         if (!player) {
-            throw new BadRequestException("You are not in the session");
+            throw new AppError(ErrorCode.NOT_IN_SESSION, HttpStatus.UNAUTHORIZED, "You're not in an active session. Please refresh the page and try again.");
         }
 
         const room = this.roomStore.getRoom(roomId);
 
         if (!room) {
-            throw new NotFoundException("Room not found");
+            throw new AppError(ErrorCode.ROOM_NOT_FOUND, HttpStatus.NOT_FOUND, "We couldn't find that room. It may have been closed or the room code is incorrect.");
         }
 
         return { player, room };

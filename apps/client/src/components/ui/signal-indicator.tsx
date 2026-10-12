@@ -5,45 +5,54 @@ interface SignalIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
     bars?: number;
     label?: string;
     showValue?: boolean;
+    showStatus?: boolean;
+    strength: number | null;
     status?: "connected" | "weak" | "disconnected";
-    strength: number;
 }
 
-const statusColor: Record<string, { bar: string; text: string; dot: string }> = {
+const statusColor: Record<string, { bar: string; dot: string; text: string }> = {
     connected: {
-        bar: "bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]",
-        dot: "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]",
-        text: "text-green-500",
+        bar: "bg-success",
+        dot: "bg-success",
+        text: "text-success",
     },
     disconnected: {
-        bar: "bg-red-500",
-        dot: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]",
-        text: "text-red-500",
+        bar: "bg-danger",
+        dot: "bg-danger animate-pulse",
+        text: "text-danger",
     },
     weak: {
-        bar: "bg-amber-500 shadow-[0_0_4px_rgba(245,158,11,0.5)]",
-        dot: "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]",
-        text: "text-amber-500",
+        bar: "bg-warning",
+        dot: "bg-warning",
+        text: "text-warning",
     },
 };
 
-function autoStatus(strength: number): "connected" | "weak" | "disconnected" {
-    if (strength <= 0) {
+/** Maps a measured latency into a 0..1 signal fraction for the bar meter. */
+function pingStrength(ping: number): number {
+    if (ping < 50) return 1;
+    if (ping < 100) return 0.75;
+    if (ping < 200) return 0.5;
+    if (ping < 300) return 0.25;
+    return 0;
+}
+
+function autoStatus(strength: number | null): "connected" | "weak" | "disconnected" {
+    if (strength === null || !Number.isFinite(strength) || strength >= 300) {
         return "disconnected";
     }
-    if (strength < 40) {
+    if (strength >= 100) {
         return "weak";
     }
     return "connected";
 }
 
-export function SignalIndicator({ strength, bars = 5, label, showValue = false, status, className, ...props }: SignalIndicatorProps) {
-    const clamped = Math.max(0, Math.min(100, strength));
-    const resolvedStatus = status ?? autoStatus(clamped);
+export function SignalIndicator({ strength, bars = 5, label, showValue = false, showStatus = false, status, className, ...props }: SignalIndicatorProps) {
+    const resolvedStatus = status ?? autoStatus(strength);
     const colors = statusColor[resolvedStatus];
-    const filledBars = Math.round((clamped / 100) * bars);
+    const filledBars = strength === null ? 0 : Math.round(pingStrength(strength) * bars);
+    const value = strength === null || !Number.isFinite(strength) ? "—" : Math.round(strength);
 
-    // Staggered bar reveal
     const [visibleBars, setVisibleBars] = React.useState(0);
     React.useEffect(() => {
         let current = 0;
@@ -58,31 +67,20 @@ export function SignalIndicator({ strength, bars = 5, label, showValue = false, 
     }, [filledBars]);
 
     return (
-        <div
-            data-slot="tron-signal-indicator"
-            className={cn("border-primary/30 bg-card/80 relative inline-flex items-center gap-3 overflow-hidden rounded border px-3 py-2 backdrop-blur-sm", className)}
-            {...props}
-        >
-            {/* Status dot */}
-            <div className={cn("h-2 w-2 shrink-0 rounded-full", colors.dot, resolvedStatus === "disconnected" && "animate-pulse")} />
+        <div data-slot="tron-signal-indicator" className={cn("border-line border-border bg-card inline-flex items-center gap-3 overflow-hidden rounded-[min(var(--radius-sm),6px)] px-3 py-2", className)} {...props}>
+            {label ? <span className="text-muted-foreground font-mono text-[10px] font-bold tracking-widest uppercase">{label}</span> : null}
 
-            {/* Label */}
-            {label ? <span className="text-foreground/80 text-[10px] tracking-widest uppercase">{label}</span> : null}
-
-            {/* Bars */}
             <div className="flex items-end gap-0.75" style={{ height: 20 }}>
                 {Array.from({ length: bars }, (_, i) => {
                     const filled = i < visibleBars;
                     const barHeight = 6 + ((i + 1) / bars) * 14;
-                    return <div key={i} className={cn("w-1.5 rounded-t-sm transition-all duration-200", filled ? colors.bar : "bg-foreground/15")} style={{ height: barHeight }} />;
+                    return <div key={i} className={cn("w-1.25 rounded-t-sm transition-all duration-200", filled ? colors.bar : "bg-muted")} style={{ height: barHeight }} />;
                 })}
             </div>
 
-            {/* Value */}
-            {showValue ? <span className={cn(" text-xs font-bold tabular-nums", colors.text)}>{Math.round(clamped)}%</span> : null}
+            {showValue ? <span className={cn("font-mono text-xs font-bold tabular-nums", colors.text)}>{value}ms</span> : null}
 
-            {/* Status label */}
-            <span className={cn("text-[9px] tracking-widest uppercase", colors.text)}>{resolvedStatus}</span>
+            {showStatus ? <span className={cn("font-mono text-[9px] font-bold tracking-widest uppercase", colors.text)}>{resolvedStatus}</span> : null}
         </div>
     );
 }
