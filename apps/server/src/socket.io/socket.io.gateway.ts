@@ -1,6 +1,6 @@
+import { RoomStore } from "@/room/room.store.js";
 import { SessionService } from "@/session/session.service.js";
 import { SocketIoService } from "@/socket.io/socket.io.service.js";
-import { RoomStore } from "@/room/room.store.js";
 import type { TypedServer, TypedSocket } from "@/types/socket.js";
 import { OnModuleInit } from "@nestjs/common";
 import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
@@ -9,7 +9,7 @@ import { parseCookie } from "cookie";
 
 export const Sub = (event: keyof ClientToServerEvents) => SubscribeMessage(event);
 
-@WebSocketGateway({ cors: { origin: "*" } })
+@WebSocketGateway({ cors: { credentials: true, origin: process.env["CLIENT_URL"] } })
 export class SocketIoGateway implements OnModuleInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
         private readonly authService: SessionService,
